@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/pages/home_page.dart';
-import 'package:jenkins_app/pages/jenkins_form.dart';
+import 'package:jenkins_app/pages/jenkins_config.dart';
 import 'package:oktoast/oktoast.dart';
 
 class MyApp extends StatelessWidget {
@@ -11,10 +11,12 @@ class MyApp extends StatelessWidget {
     return OKToast(
       child: MaterialApp(
         title: 'Flutter Demo',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        ),
-        home: const HomePage(),
+        initialRoute: "/",
+        theme: ThemeData.light(),
+        routes: {
+          '/': (context) => const HomePage(),
+          'jenkins_config': (context) => JenkinsConfig(),
+        },
       ),
     );
   }
