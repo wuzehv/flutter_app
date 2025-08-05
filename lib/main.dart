@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/pages/home_page.dart';
+import 'package:jenkins_app/pages/jenkins.dart';
 import 'package:jenkins_app/pages/jenkins_config.dart';
+import 'package:jenkins_app/pages/jenkins_job.dart';
+import 'package:jenkins_app/pages/jenkins_project.dart';
+import 'package:jenkins_app/pages/jenkins_project_build_log.dart';
 import 'package:oktoast/oktoast.dart';
 
 class MyApp extends StatelessWidget {
@@ -16,6 +20,10 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const HomePage(),
           'jenkins_config': (context) => JenkinsConfig(),
+          'jenkins_job': (context) => JenkinsJob(jenkins: ModalRoute.of(context)!.settings.arguments as Jenkins),
+          'jenkins_project': (context) => JenkinsProject(jenkins: ModalRoute.of(context)!.settings.arguments as Jenkins),
+          'jenkins_project_build_log': (context) =>
+              JenkinsProjectBuildLog(jenkins: ModalRoute.of(context)!.settings.arguments as Jenkins),
         },
       ),
     );

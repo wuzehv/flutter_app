@@ -47,22 +47,37 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+      // bottomNavigationBar: BottomAppBar(
+      //   height: 50,
+      //   color: Colors.white,
+      //   shape: CircularNotchedRectangle(), // 底部导航栏打一个圆形的洞
+      //   child: Row(
+      //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+      //     children: [
+      //       IconButton(icon: Icon(Icons.favorite_border), onPressed: () {}, padding: EdgeInsets.zero),
+      //       SizedBox(),
+      //       IconButton(icon: Icon(Icons.touch_app_rounded), onPressed: () {}, padding: EdgeInsets.zero),
+      //     ],
+      //   ),
+      // ),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'add',
+        onPressed: () => Navigator.pushNamed(context, "jenkins_config"),
+        tooltip: '添加配置',
+        shape: CircleBorder(),
+        child: const Icon(Icons.add),
+      ),
       body: items.isEmpty
           ? Center(child: Text('请添加配置'))
           : SafeArea(
               child: SlidableAutoCloseBehavior(
                 child: ListView.builder(
                   itemCount: items.length,
-                  itemBuilder: (context, index) =>
-                      JenkinsItem(jenkins: items[index]),
+                  itemBuilder: (context, index) => JenkinsItem(jenkins: items[index]),
                 ),
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, "jenkins_config"),
-        tooltip: '添加配置',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

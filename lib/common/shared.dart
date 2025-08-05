@@ -9,9 +9,7 @@ class JenkinsStore {
     final prefs = await SharedPreferences.getInstance();
 
     final String? jsonString = prefs.getString(_key);
-    Map<String, dynamic> data = jsonString != null
-        ? json.decode(jsonString)
-        : {};
+    Map<String, dynamic> data = jsonString != null ? json.decode(jsonString) : {};
     data[id] = jenkins;
     await prefs.setString(_key, json.encode(data));
   }
