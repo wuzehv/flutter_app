@@ -58,8 +58,11 @@ class Jenkins {
     final response = await _getDio().post(
       '$url/job/$project/$id/api/json?tree=actions[parameters[name,value],causes[userName]],result',
     );
-    List<dynamic> res = response.data['actions'][0]['parameters'].map((param) => '${param['name']}: ${param['value']}').toList();
-    res.add('user: ${response.data['actions'][1]['causes'][0]['userName']}');
+    List<dynamic> res = response.data['actions'][0]['parameters']
+        .where((param) => !['action', 'update_config', 'install_plugin', 'commit_id'].contains(param['name']))
+        .map((param) => '${param['name']}: ${param['value']}')
+        .toList();
+    res.add('提交人: ${response.data['actions'][1]['causes'][0]['userName']}');
 
     // 获取当前任务是否需要审核
     Map<String, dynamic> m = {'list': res, 'id': id};

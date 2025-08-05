@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/pages/jenkins.dart';
@@ -13,7 +14,6 @@ class JenkinsProjectBuildLog extends StatefulWidget {
 }
 
 class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
-  bool _expanded = false;
   Map<String, List<Widget>> _childrenMap = {};
 
   Future<void> _loadChildren(String id) async {
@@ -27,7 +27,11 @@ class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
     final tmp = await widget.jenkins.getProjectBuildDetail(id);
     Navigator.of(context).pop();
     setState(() {
-      var m = tmp['list'].map<Widget>((child) => ListTile(title: Text(child))).toList();
+      var m = tmp['list']
+          .map<Widget>(
+            (child) => ListTile(title: Text(child), dense: true, visualDensity: VisualDensity(horizontal: 0, vertical: -4)),
+          )
+          .toList();
       if (tmp['proceedUrl'] != null) {
         m.add(
           Row(
@@ -76,14 +80,8 @@ class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
           return ExpansionTile(
             leading: i,
             title: Text(DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString()),
-            initiallyExpanded: _expanded,
             onExpansionChanged: (bool expanded) async {
-              setState(() {
-                _expanded = expanded;
-              });
-              if (expanded) {
-                await _loadChildren(project['id'].toString());
-              }
+              await _loadChildren(project['id'].toString());
             },
             children: _childrenMap[project['id'].toString()] ?? [],
           );
