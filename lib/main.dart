@@ -7,6 +7,7 @@ import 'package:jenkins_app/pages/jenkins_job.dart';
 import 'package:jenkins_app/pages/jenkins_project.dart';
 import 'package:jenkins_app/pages/jenkins_project_build_log.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:flutter/cupertino.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -30,4 +31,8 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
+}
+
+void main() {
+  runApp(const MyApp());
 }
