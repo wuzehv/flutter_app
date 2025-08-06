@@ -29,17 +29,14 @@ class _JenkinsProjectState extends State<JenkinsProject> {
                     children: [
                       Row(
                         children: [
-                          ElevatedButton(
-                            onPressed: () async => await widget.jenkins.quickBuild(context, project, 'tra'),
-                            child: Text("tra"),
-                          ),
+                          ElevatedButton(onPressed: () => widget.jenkins.toProjectPage(context, project, 'tra'), child: Text("tra")),
+                          SizedBox(width: 7),
+                          ElevatedButton(onPressed: () => widget.jenkins.toProjectPage(context, project, 'pro'), child: Text("pro")),
                           SizedBox(width: 7),
                           ElevatedButton(
-                            onPressed: () async => await widget.jenkins.quickBuild(context, project, 'pro'),
-                            child: Text("pro"),
+                            onPressed: () => widget.jenkins.toProjectPage(context, project, 'customize'),
+                            child: Text("自定义"),
                           ),
-                          SizedBox(width: 7),
-                          ElevatedButton(onPressed: () => print("删除"), child: Text("自定义")),
                           SizedBox(width: 7),
                           ElevatedButton.icon(
                             onPressed: () async {

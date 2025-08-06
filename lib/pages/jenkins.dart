@@ -12,6 +12,7 @@ class Jenkins {
   final String token;
 
   String? project; // 当前项目，进入某个项目时使用
+  String? env;
 
   List<String>? jobs;
   List<String>? projects;
@@ -20,9 +21,6 @@ class Jenkins {
   Dio? _dio;
 
   Jenkins({required this.remark, required this.url, required this.user, required this.token, this.id, this.project});
-
-  // 已经实现了的项目
-  Set<String> buildProject = {'wms_boss_api', 'wms_new_api-php', 'wms_scm_api-php'};
 
   Map<String, dynamic> toJson() {
     return {'id': id, 'remark': remark, 'url': url, 'user': user, 'token': token, 'project': project};
@@ -54,12 +52,11 @@ class Jenkins {
   }
 
   Future<Map<String, dynamic>> getProjectBuildDetail(String id) async {
-    this.project = project;
     final response = await _getDio().post(
       '$url/job/$project/$id/api/json?tree=actions[parameters[name,value],causes[userName]],result',
     );
     List<dynamic> res = response.data['actions'][0]['parameters']
-        .where((param) => !['action', 'update_config', 'install_plugin', 'commit_id'].contains(param['name']))
+        .where((param) => !['action', 'update_config', 'commit_id'].contains(param['name']))
         .map((param) => '${param['name']}: ${param['value']}')
         .toList();
     res.add('提交人: ${response.data['actions'][1]['causes'][0]['userName']}');
@@ -102,12 +99,57 @@ class Jenkins {
     return dio;
   }
 
-  Future<void> quickBuild(BuildContext context, String project, String env) async {
-    if (!buildProject.contains(project)) {
+  Future<void> toProjectPage(BuildContext context, String project, String env) async {
+    this.project = project;
+    this.env = env;
+    var projectEnum = project.replaceAll('-', '_');
+
+    if ([
+      _canBuildProject.wms_boss_api.name,
+      _canBuildProject.wms_new_api_php.name,
+      _canBuildProject.wms_scm_api_php.name,
+    ].contains(projectEnum)) {
+      Navigator.pushNamed(context, 'jenkins_build_wms_be', arguments: this);
+    } else {
       showError('当前项目未实现');
       return;
     }
+  }
 
+  Future<Map<String, dynamic>> getWmsBeDetail() async {
+    var idx = 4;
+    if (project?.replaceAll('-', '_') != _canBuildProject.wms_new_api_php.name) {
+      idx = 2;
+    }
+    final response = await _getDio().post('$url/job/$project/api/json??tree=property[parameterDefinitions[name,choices]]');
+    try {
+      // env
+      Map<String, bool> e = {};
+      for (var i in response.data['property'][idx]['parameterDefinitions'][4]['choices']) {
+        e[i] = i.toString().toLowerCase().contains(env!.toLowerCase());
+      }
+      // 审核人
+      List<String> a = [];
+      for (var i in response.data['property'][idx]['parameterDefinitions'][6]['choices']) {
+        a.add(i);
+      }
+
+      return {'env': e, 'approver': a};
+    } catch (e) {
+      showError('读取配置失败，请检查');
+    }
+
+    return {};
+  }
+
+  Future<void> buildWmsBe(
+    BuildContext context,
+    bool isPro,
+    bool installPlugin,
+    List<String> inputEnv,
+    String approver,
+    String branch,
+  ) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -116,32 +158,24 @@ class Jenkins {
       },
     );
 
+    var p = installPlugin ? 'Yes' : 'No';
     try {
-      if (env == 'tra') {
-        List<Future> x = [];
-        for (var e in ['tra', 'ph-tra', 'la-tra', 'my-tra']) {
-          x.add(
-            _getDio().post(
-              '$url/job/$project/buildWithParameters',
-              data: FormData.fromMap({"branch": "training", "environment": e, 'inventory': 'All'}),
-            ),
-          );
-        }
-        await Future.wait(x);
+      List<Future> x = [];
+      for (var e in inputEnv) {
+        x.add(
+          _getDio().post(
+            '$url/job/$project/buildWithParameters',
+            data: FormData.fromMap({
+              "branch": branch,
+              "environment": e,
+              'inventory': isPro ? 'All' : 'Single',
+              'approver': approver,
+              'install_plugin': p,
+            }),
+          ),
+        );
       }
-
-      if (env == 'pro') {
-        List<Future> x = [];
-        for (var e in ['pro', 'ph-pro', 'vn-pro', 'la-pro', 'my-pro', 'id-pro', 'sg-pro', 'sz-pro']) {
-          x.add(
-            _getDio().post(
-              '$url/job/$project/buildWithParameters',
-              data: FormData.fromMap({"branch": "master", "environment": e, 'inventory': 'All', 'approver': 'wuzehui'}),
-            ),
-          );
-        }
-        await Future.wait(x);
-      }
+      await Future.wait(x);
 
       Navigator.of(context).pop();
       showSucc('提交成功');
@@ -151,3 +185,5 @@ class Jenkins {
     }
   }
 }
+
+enum _canBuildProject { wms_boss_api, wms_new_api_php, wms_scm_api_php }
