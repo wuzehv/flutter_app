@@ -36,17 +36,55 @@ class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
         m.add(
           Row(
             children: [
-              TextButton.icon(
-                onPressed: () {
-                  widget.jenkins.auditBuild(tmp['proceedUrl']);
+              SizedBox(width: 10),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                label: Icon(Icons.close, color: Colors.white),
+                onPressed: () async {
+                  await showDialog(
+                    context: context,
+                    builder: (content) {
+                      return AlertDialog(
+                        content: Text("确认驳回任务吗?"),
+                        actions: <Widget>[
+                          TextButton(child: Text("取消"), onPressed: () => Navigator.of(context).pop()),
+                          TextButton(
+                            child: Text("确认"),
+                            onPressed: () {
+                              widget.jenkins.auditBuild(tmp['abortUrl']);
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
-                label: Icon(Icons.check, color: Colors.green),
               ),
-              TextButton.icon(
-                onPressed: () {
-                  widget.jenkins.auditBuild(tmp['abortUrl']);
+              SizedBox(width: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                onPressed: () async {
+                  await showDialog(
+                    context: context,
+                    builder: (content) {
+                      return AlertDialog(
+                        content: Text("确认通过任务吗?"),
+                        actions: <Widget>[
+                          TextButton(child: Text("取消"), onPressed: () => Navigator.of(context).pop()),
+                          TextButton(
+                            child: Text("确认"),
+                            onPressed: () {
+                              widget.jenkins.auditBuild(tmp['proceedUrl']);
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
-                label: Icon(Icons.close, color: Colors.red),
+                label: Icon(Icons.check, color: Colors.white),
               ),
             ],
           ),

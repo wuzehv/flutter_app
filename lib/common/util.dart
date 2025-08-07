@@ -21,3 +21,7 @@ void showError(String txt) {
 void showSucc(String txt) {
   showToast(txt, backgroundColor: Colors.green, position: ToastPosition.bottom);
 }
+
+void showInfo(String txt) {
+  showToast(txt, backgroundColor: Colors.orangeAccent, position: ToastPosition.bottom);
+}

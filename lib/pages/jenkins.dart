@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -121,8 +122,8 @@ class Jenkins {
     if (project?.replaceAll('-', '_') != _canBuildProject.wms_new_api_php.name) {
       idx = 2;
     }
-    final response = await _getDio().post('$url/job/$project/api/json??tree=property[parameterDefinitions[name,choices]]');
     try {
+      final response = await _getDio().post('$url/job/$project/api/json?tree=property[parameterDefinitions[name,choices]]');
       // env
       Map<String, bool> e = {};
       for (var i in response.data['property'][idx]['parameterDefinitions'][4]['choices']) {
@@ -142,28 +143,22 @@ class Jenkins {
     return {};
   }
 
-  Future<void> buildWmsBe(
+  Stream<(String, bool)> buildWmsBe(
     BuildContext context,
     bool isPro,
     bool installPlugin,
     List<String> inputEnv,
     String approver,
     String branch,
-  ) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const Center(child: CircularProgressIndicator());
-      },
-    );
-
+  ) {
     var p = installPlugin ? 'Yes' : 'No';
-    try {
-      List<Future> x = [];
-      for (var e in inputEnv) {
-        x.add(
-          _getDio().post(
+
+    final controller = StreamController<(String, bool)>();
+    int remaining = inputEnv.length;
+
+    for (var e in inputEnv) {
+      _getDio()
+          .post(
             '$url/job/$project/buildWithParameters',
             data: FormData.fromMap({
               "branch": branch,
@@ -172,17 +167,22 @@ class Jenkins {
               'approver': approver,
               'install_plugin': p,
             }),
-          ),
-        );
-      }
-      await Future.wait(x);
-
-      Navigator.of(context).pop();
-      showSucc('提交成功');
-    } catch (e) {
-      Navigator.of(context).pop();
-      showError('提交失败，请检查网络');
+          )
+          .then((onValue) {
+            controller.add((e, true));
+          })
+          .catchError((onError) {
+            controller.add((e, false));
+          })
+          .whenComplete(() {
+            remaining--;
+            if (remaining == 0) {
+              controller.close();
+            }
+          });
     }
+
+    return controller.stream;
   }
 }
 

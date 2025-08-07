@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/common/shared.dart';
@@ -108,7 +110,7 @@ class _JenkinsBuildWmsBeState extends State<JenkinsBuildWmsBe> {
                       Expanded(
                         child: ElevatedButton(
                           child: Padding(padding: const EdgeInsets.all(20.0), child: Text("提交")),
-                          onPressed: () {
+                          onPressed: () async {
                             if ((_formKey.currentState as FormState).validate()) {
                               if (_approver == "") {
                                 showError('必须选择审核人');
@@ -135,15 +137,32 @@ class _JenkinsBuildWmsBeState extends State<JenkinsBuildWmsBe> {
                                 return;
                               }
 
-                              widget.jenkins.buildWmsBe(
+                              showInfo('开始提交，请等待');
+                              var all = true;
+                              await for (final (env, success) in widget.jenkins.buildWmsBe(
                                 context,
                                 hasPro,
                                 _switchSelected,
                                 envList,
                                 _approver,
                                 _branchController.text,
-                              );
-                              Navigator.of(context).pop();
+                              )) {
+                                if (!success) {
+                                  all = false;
+                                } else {
+                                  setState(() {
+                                    _envCheckboxes[env] = !success;
+                                  });
+                                }
+                              }
+
+                              if (!all) {
+                                showSucc('提交失败，请尝试重新提交');
+                              } else {
+                                await Future.delayed(Duration(milliseconds: 1100));
+                                showSucc('提交成功');
+                                Navigator.of(context).pop();
+                              }
                             }
                           },
                         ),
