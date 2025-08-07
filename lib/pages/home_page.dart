@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/pages/jenkins_item.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,6 +23,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadList() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    print(packageInfo.version);
     final list = await JenkinsStore.list();
     setState(() {
       items = list;

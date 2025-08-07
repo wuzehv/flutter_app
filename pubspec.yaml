@@ -38,6 +38,7 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_slidable: ^4.0.0
   dio: ^5.8.0+1
+  package_info_plus: ^8.3.0
 
 dev_dependencies:
   flutter_test:
