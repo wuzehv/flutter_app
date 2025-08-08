@@ -46,9 +46,20 @@ class Jenkins {
     projects = List<String>.from(response.data['jobs'].map((e) => e['name']));
   }
 
+  bool checkProjectImpl(String project) {
+    try {
+      _canBuildProject.values.byName(_getProjectEnum(project));
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
   Future<void> getProjectBuildLog(String project) async {
     this.project = project;
-    final response = await _getDio().post('$url/job/$project/api/json?tree=builds[result,timestamp,id]{,15}');
+    final response = await _getDio().post(
+      '$url/job/$project/api/json?tree=builds[id,result,timestamp,actions[parameters[name,value]{3,5},causes[userName]]{,2}]{,10}',
+    );
     projectBuildLog = response.data['builds'];
   }
 
@@ -101,20 +112,25 @@ class Jenkins {
   }
 
   Future<void> toProjectPage(BuildContext context, String project, String env) async {
+    if (!checkProjectImpl(project)) {
+      showError('当前项目未实现');
+      return;
+    }
+
     this.project = project;
     this.env = env;
-    var projectEnum = project.replaceAll('-', '_');
-
+    var projectEnum = _getProjectEnum(project);
     if ([
       _canBuildProject.wms_boss_api.name,
       _canBuildProject.wms_new_api_php.name,
       _canBuildProject.wms_scm_api_php.name,
     ].contains(projectEnum)) {
       Navigator.pushNamed(context, 'jenkins_build_wms_be', arguments: this);
-    } else {
-      showError('当前项目未实现');
-      return;
     }
+  }
+
+  String _getProjectEnum(String project) {
+    return project.replaceAll('-', '_');
   }
 
   Future<Map<String, dynamic>> getWmsBeDetail() async {
@@ -122,12 +138,19 @@ class Jenkins {
     if (project?.replaceAll('-', '_') != _canBuildProject.wms_new_api_php.name) {
       idx = 2;
     }
+    var envParams = env!.toLowerCase();
     try {
       final response = await _getDio().post('$url/job/$project/api/json?tree=property[parameterDefinitions[name,choices]]');
       // env
       Map<String, bool> e = {};
       for (var i in response.data['property'][idx]['parameterDefinitions'][4]['choices']) {
-        e[i] = i.toString().toLowerCase().contains(env!.toLowerCase());
+        if (['tra', 'pro'].contains(envParams)) {
+          if (i.toString().toLowerCase().contains(envParams)) {
+            e[i] = true;
+          }
+        } else {
+          e[i] = false;
+        }
       }
       // 审核人
       List<String> a = [];

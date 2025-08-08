@@ -23,8 +23,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadList() async {
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    print(packageInfo.version);
+    // PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final list = await JenkinsStore.list();
     setState(() {
       items = list;

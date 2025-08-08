@@ -45,7 +45,7 @@ class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
                     context: context,
                     builder: (content) {
                       return AlertDialog(
-                        content: Text("确认驳回任务吗?"),
+                        content: Text("确认取消任务吗?"),
                         actions: <Widget>[
                           TextButton(child: Text("取消"), onPressed: () => Navigator.of(context).pop()),
                           TextButton(
@@ -117,9 +117,17 @@ class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
 
           return ExpansionTile(
             leading: i,
-            title: Text(DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString()),
+            title: Text(
+              '【${project['actions'][0]['parameters'][1]['value']}】${project['actions'][0]['parameters'][0]['value']} by ${project['actions'][1]['causes'][0]['userName']}',
+            ),
+            subtitle: Text(
+              DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),
+              style: TextStyle(color: Colors.grey, fontSize: 13.5),
+            ),
             onExpansionChanged: (bool expanded) async {
-              await _loadChildren(project['id'].toString());
+              if (expanded) {
+                await _loadChildren(project['id'].toString());
+              }
             },
             children: _childrenMap[project['id'].toString()] ?? [],
           );

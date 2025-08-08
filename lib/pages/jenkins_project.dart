@@ -29,9 +29,15 @@ class _JenkinsProjectState extends State<JenkinsProject> {
                     children: [
                       Row(
                         children: [
-                          ElevatedButton(onPressed: () => widget.jenkins.toProjectPage(context, project, 'tra'), child: Text("tra")),
+                          ElevatedButton(
+                            onPressed: () => widget.jenkins.toProjectPage(context, project, 'tra'),
+                            child: Text("tra"),
+                          ),
                           SizedBox(width: 7),
-                          ElevatedButton(onPressed: () => widget.jenkins.toProjectPage(context, project, 'pro'), child: Text("pro")),
+                          ElevatedButton(
+                            onPressed: () => widget.jenkins.toProjectPage(context, project, 'pro'),
+                            child: Text("pro"),
+                          ),
                           SizedBox(width: 7),
                           ElevatedButton(
                             onPressed: () => widget.jenkins.toProjectPage(context, project, 'customize'),
@@ -40,6 +46,10 @@ class _JenkinsProjectState extends State<JenkinsProject> {
                           SizedBox(width: 7),
                           ElevatedButton.icon(
                             onPressed: () async {
+                              if (!widget.jenkins.checkProjectImpl(project)) {
+                                showError('当前项目未实现');
+                                return;
+                              }
                               try {
                                 await widget.jenkins.getProjectBuildLog(project);
                                 Navigator.pushNamed(context, 'jenkins_project_build_log', arguments: widget.jenkins);
