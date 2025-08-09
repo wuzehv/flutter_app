@@ -15,14 +15,14 @@ class _LeftDrawerState extends State<LeftDrawer> {
   @override
   void initState() {
     super.initState();
-    setState(() {
-      _loadVersion();
-    });
+    _loadVersion();
   }
 
   Future<void> _loadVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    _version = packageInfo.version;
+    setState(() {
+      _version = packageInfo.version;
+    });
   }
 
   @override
@@ -31,19 +31,11 @@ class _LeftDrawerState extends State<LeftDrawer> {
       child: MediaQuery.removePadding(
         context: context,
         removeTop: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 100.0),
-              child: Row(
-                children: <Widget>[
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0)),
-                  Text(_version, style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ],
+        child: Center(
+          child: Text(
+            'v$_version',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );
