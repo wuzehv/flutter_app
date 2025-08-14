@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../pages/jenkins.dart';
+import '../screens/jenkins.dart';
 
 class JenkinsStore {
   static const String _key = 'jenkins_map';
