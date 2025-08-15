@@ -1,11 +1,11 @@
 import 'dart:convert';
+import 'package:jenkins_app/models/jenkins.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../screens/jenkins.dart';
 
 class JenkinsStore {
   static const String _key = 'jenkins_map';
 
-  static Future<void> add(String id, Jenkins jenkins) async {
+  static Future<void> add(String id, JenkinsModel jenkins) async {
     final prefs = await SharedPreferences.getInstance();
 
     final String? jsonString = prefs.getString(_key);
@@ -18,7 +18,7 @@ class JenkinsStore {
     final prefs = await SharedPreferences.getInstance();
     final String? jsonString = prefs.getString(_key);
     final m = jsonString != null ? json.decode(jsonString) : {};
-    return m.values.map((e) => Jenkins.fromJson(e)).toList();
+    return m.values.map((e) => JenkinsModel.fromJson(e)).toList();
   }
 
   static Future<void> remove(String id) async {

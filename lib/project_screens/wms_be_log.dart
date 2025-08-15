@@ -5,16 +5,16 @@ import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/screens/jenkins.dart';
 
-class JenkinsProjectBuildLog extends StatefulWidget {
+class WmsBeLog extends StatefulWidget {
   final Jenkins jenkins;
 
-  const JenkinsProjectBuildLog({super.key, required this.jenkins});
+  const WmsBeLog({super.key, required this.jenkins});
 
   @override
-  State<StatefulWidget> createState() => _JenkinsProjectBuildLogState();
+  State<StatefulWidget> createState() => _WmsBeLogState();
 }
 
-class _JenkinsProjectBuildLogState extends State<JenkinsProjectBuildLog> {
+class _WmsBeLogState extends State<WmsBeLog> {
   Map<String, List<Widget>> _childrenMap = {};
 
   Future<void> _loadChildren(String id) async {

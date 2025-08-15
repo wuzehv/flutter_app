@@ -8,22 +8,21 @@ import 'package:flutter_app_update/flutter_app_update.dart';
 import 'package:flutter_app_update/result_model.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/jenkins_item.dart';
 import 'package:jenkins_app/screens/left_drawer.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class Home extends StatefulWidget {
+  const Home({super.key});
 
   @override
-  State<StatefulWidget> createState() => _HomePageState();
+  State<StatefulWidget> createState() => _HomeState();
 }
 
-class _HomePageState extends State<HomePage> {
-  List<dynamic> _items = [];
-  bool _loading = true;
+class _HomeState extends State<Home> {
   final String _upgrade = 'http://192.168.5.60:10000';
 
   final ValueNotifier<double> _progressNotifier = ValueNotifier(0);
@@ -41,11 +40,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadList() async {
-    final list = await JenkinsStore.list();
-    setState(() {
-      _items = list;
-      _loading = false;
-    });
+    context.read<JenkinsProvider>().list();
   }
 
   void _initUpdateListener() {
@@ -151,10 +146,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Jenkins App"),
@@ -177,16 +168,20 @@ class _HomePageState extends State<HomePage> {
         shape: CircleBorder(),
         child: const Icon(Icons.add),
       ),
-      body: _items.isEmpty
-          ? Center(child: Text('请添加配置'))
-          : SafeArea(
-              child: SlidableAutoCloseBehavior(
-                child: ListView.builder(
-                  itemCount: _items.length,
-                  itemBuilder: (context, index) => JenkinsItem(jenkins: _items[index]),
-                ),
-              ),
-            ),
+      body: Consumer<JenkinsProvider>(
+        builder: (context, provider, child) {
+          return provider.items.isEmpty
+              ? Center(child: Text('请添加配置'))
+              : SafeArea(
+                  child: SlidableAutoCloseBehavior(
+                    child: ListView.builder(
+                      itemCount: provider.items.length,
+                      itemBuilder: (context, index) => JenkinsItem(jenkins: provider.items[index]),
+                    ),
+                  ),
+                );
+        },
+      ),
     );
   }
 

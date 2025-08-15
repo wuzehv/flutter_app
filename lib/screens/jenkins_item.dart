@@ -2,14 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
-import 'package:jenkins_app/screens/jenkins.dart';
-import 'package:dio/dio.dart';
-import 'package:oktoast/oktoast.dart';
+import 'package:jenkins_app/models/jenkins.dart';
+import 'package:provider/provider.dart';
 
 class JenkinsItem extends StatefulWidget {
-  final Jenkins jenkins;
+  final JenkinsModel jenkins;
 
   const JenkinsItem({super.key, required this.jenkins});
 
@@ -34,8 +32,8 @@ class _JenkinsItemState extends State<JenkinsItem> {
           ),
           SlidableAction(
             onPressed: (_) {
-              JenkinsStore.remove(widget.jenkins.id!);
-              context.pushReplacement('/');
+              context.read<JenkinsProvider>().remove(widget.jenkins.id!);
+              context.go('/');
             },
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -53,8 +51,8 @@ class _JenkinsItemState extends State<JenkinsItem> {
         ),
         onTap: () async {
           try {
-            await widget.jenkins.getJobList();
-            context.push('/job', extra: widget.jenkins);
+            await context.read<JenkinsJobProvider>().setJenkins(widget.jenkins).fetchJobs();
+            context.push('/job', extra: widget.jenkins.remark);
           } catch (e) {
             showError('请求失败，请检查网络和配置信息');
           }

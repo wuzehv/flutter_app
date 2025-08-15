@@ -34,6 +34,10 @@ int compareVersions(String v1, String v2) {
   return 0;
 }
 
+String snakeToCamel(String input) {
+  return input.replaceAllMapped(RegExp(r'[_-]([a-z])'), (match) => match.group(1)!.toUpperCase());
+}
+
 void showError(String txt) {
   showToast(txt, backgroundColor: Colors.red, position: ToastPosition.bottom);
 }

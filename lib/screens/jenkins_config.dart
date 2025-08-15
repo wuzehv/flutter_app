@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
-import 'package:jenkins_app/screens/jenkins.dart';
+import 'package:jenkins_app/models/jenkins.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class JenkinsConfig extends StatefulWidget {
-  final Jenkins? jenkins;
+  final JenkinsModel? jenkins;
 
   const JenkinsConfig({super.key, this.jenkins});
 
@@ -38,7 +38,6 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
   @override
   Widget build(BuildContext context) {
     final jenkins = widget.jenkins;
-    print(jenkins);
     if (jenkins != null) {
       _urlController.text = jenkins.url;
       _remarkController.text = jenkins.remark;
@@ -47,68 +46,66 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
       _id = jenkins.id;
     }
 
-    return Form(
-      key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(20.0, 40.0, 20.0, 20.0),
-        child: Column(
-          children: <Widget>[
-            TextFormField(
-              autofocus: true,
-              controller: _urlController,
-              decoration: InputDecoration(labelText: "地址", hintText: "jenkins服务地址", prefixIcon: Icon(Icons.link)),
-              validator: (v) {
-                final uri = Uri.tryParse(v ?? '');
-                return (uri == null || uri.host.isEmpty || uri.scheme.isEmpty) ? 'url不合法' : null;
-              },
-            ),
-            TextFormField(
-              controller: _userController,
-              decoration: InputDecoration(labelText: "用户名", hintText: "jenkins登录用户名", prefixIcon: Icon(Icons.person)),
-              validator: (v) => v!.trim().isNotEmpty ? null : "",
-            ),
-            TextFormField(
-              controller: _tokenController,
-              decoration: InputDecoration(labelText: "Token", hintText: "jenkins用户Token，不是密码", prefixIcon: Icon(Icons.lock)),
-              validator: (v) => v!.trim().isNotEmpty ? null : "",
-            ),
-            TextFormField(
-              autofocus: true,
-              controller: _remarkController,
-              decoration: InputDecoration(labelText: "备注", hintText: "备注", prefixIcon: Icon(Icons.title)),
-              validator: (v) => v!.trim().isNotEmpty ? null : "",
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: ElevatedButton(
-                      child: Padding(padding: const EdgeInsets.all(20.0), child: Text("保存")),
-                      onPressed: () {
-                        if ((_formKey.currentState as FormState).validate()) {
-                          var j = Jenkins(
-                            remark: _remarkController.text.trim(),
-                            url: trimEndingChars(_urlController.text, "/ "),
-                            user: _userController.text.trim(),
-                            token: _tokenController.text.trim(),
-                            id: _id ?? getRandomString(10),
-                          );
-                          if (_id != null) {
-                            JenkinsStore.remove(_id!);
-                          }
-                          JenkinsStore.add(j.id!, j);
-                          context.pushReplacement('/');
-                        }
-                      },
-                    ),
-                  ),
-                ],
+    return Scaffold(
+      appBar: AppBar(title: Text('配置管理')),
+      body: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Container(
+          child: Column(
+            children: <Widget>[
+              TextFormField(
+                autofocus: true,
+                controller: _urlController,
+                decoration: InputDecoration(labelText: "地址", hintText: "jenkins服务地址", prefixIcon: Icon(Icons.link)),
+                validator: (v) {
+                  final uri = Uri.tryParse(v ?? '');
+                  return (uri == null || uri.host.isEmpty || uri.scheme.isEmpty) ? 'url不合法' : null;
+                },
               ),
-            ),
-          ],
+              TextFormField(
+                controller: _userController,
+                decoration: InputDecoration(labelText: "用户名", hintText: "jenkins登录用户名", prefixIcon: Icon(Icons.person)),
+                validator: (v) => v!.trim().isNotEmpty ? null : "",
+              ),
+              TextFormField(
+                controller: _tokenController,
+                decoration: InputDecoration(labelText: "Token", hintText: "jenkins用户Token，不是密码", prefixIcon: Icon(Icons.lock)),
+                validator: (v) => v!.trim().isNotEmpty ? null : "",
+              ),
+              TextFormField(
+                autofocus: true,
+                controller: _remarkController,
+                decoration: InputDecoration(labelText: "备注", hintText: "备注", prefixIcon: Icon(Icons.title)),
+                validator: (v) => v!.trim().isNotEmpty ? null : "",
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: ElevatedButton(
+                        child: Padding(padding: const EdgeInsets.all(20.0), child: Text("保存")),
+                        onPressed: () {
+                          if ((_formKey.currentState as FormState).validate()) {
+                            var j = JenkinsModel(
+                              remark: _remarkController.text.trim(),
+                              url: trimEndingChars(_urlController.text, "/ "),
+                              user: _userController.text.trim(),
+                              token: _tokenController.text.trim(),
+                              id: _id,
+                            );
+                            context.read<JenkinsProvider>().add(j);
+                            context.pop();
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
