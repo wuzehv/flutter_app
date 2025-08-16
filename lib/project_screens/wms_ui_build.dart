@@ -3,21 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins_wms_be.dart';
+import 'package:jenkins_app/models/jenkins_wms_ui.dart';
 import 'package:jenkins_app/screens/jenkins.dart';
 
-class WmsBeBuild extends StatefulWidget {
-  final JenkinsWmsBe jenkins;
+class WmsUiBuild extends StatefulWidget {
+  final JenkinsWmsUi jenkins;
   final String env;
   final Map<String, bool> envList;
   final List<String> approver;
 
-  const WmsBeBuild({super.key, required this.jenkins, required this.env, required this.envList, required this.approver});
+  const WmsUiBuild({super.key, required this.jenkins, required this.env, required this.envList, required this.approver});
 
   @override
-  State<StatefulWidget> createState() => _WmsBeBuildState();
+  State<StatefulWidget> createState() => _WmsUiBuildState();
 }
 
-class _WmsBeBuildState extends State<WmsBeBuild> {
+class _WmsUiBuildState extends State<WmsUiBuild> {
   final TextEditingController _branchController = TextEditingController();
   final GlobalKey _formKey = GlobalKey<FormState>();
 
@@ -47,17 +48,6 @@ class _WmsBeBuildState extends State<WmsBeBuild> {
           key: _formKey,
           child: Column(
             children: <Widget>[
-              SwitchListTile(
-                title: Text('是否安装composer'),
-                value: _switchSelected,
-                onChanged: (value) {
-                  //重新构建页面
-                  setState(() {
-                    _switchSelected = value;
-                  });
-                },
-              ),
-              Divider(),
               ...widget.envList.keys.map((key) {
                 return CheckboxListTile(
                   contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 15),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -26,27 +27,14 @@ class JenkinsWmsBe extends JenkinsProjectModel {
             children: [
               Row(
                 children: [
-                  ElevatedButton(onPressed: () => getDetailAndToPage('tra'), child: Text("tra")),
+                  ElevatedButton(onPressed: () => _toBuildPage('tra'), child: Text("tra")),
                   SizedBox(width: 7),
-                  ElevatedButton(onPressed: () => getDetailAndToPage('pro'), child: Text("pro")),
+                  ElevatedButton(onPressed: () => _toBuildPage('pro'), child: Text("pro")),
                   SizedBox(width: 7),
-                  ElevatedButton(onPressed: () => getDetailAndToPage('customize'), child: Text("自定义")),
+                  ElevatedButton(onPressed: () => _toBuildPage('customize'), child: Text("自定义")),
                   SizedBox(width: 7),
                   ElevatedButton.icon(
-                    onPressed: () {},
-                    // onPressed: () async {
-                    //   if (!widget.jenkins.checkProjectImpl(project)) {
-                    //     showError('当前项目未实现');
-                    //     return;
-                    //   }
-                    //   try {
-                    //     await widget.jenkins.getProjectBuildLog(project);
-                    //     context.push('/job/project/log', extra: widget.jenkins);
-                    //   } catch (e) {
-                    //     print(e);
-                    //     showError('请求失败，请检查网络和配置信息');
-                    //   }
-                    // },
+                    onPressed: () => _toLogPage(),
                     icon: Icon(Icons.playlist_add_check_outlined),
                     label: Text("审核"),
                   ),
@@ -60,13 +48,10 @@ class JenkinsWmsBe extends JenkinsProjectModel {
     ];
   }
 
-  Future<void> getDetailAndToPage(String env) async {
+  Future<void> _toBuildPage(String env) async {
     final loader = context.read<LoadingProvider>();
     loader.show();
-    var idx = 4;
-    if (name != wmsNewApiPhp) {
-      idx = 2;
-    }
+    var idx = name != wmsNewApiPhp ? 2 : 4;
     var envParams = env.toLowerCase();
     try {
       final response = await jenkins.dio.post(
@@ -89,7 +74,7 @@ class JenkinsWmsBe extends JenkinsProjectModel {
         a.add(i);
       }
 
-      context.push('/job/project/wms_be', extra: {'obj': this, 'env': envParams, 'env_list': e, 'approver': a});
+      context.push('/job/project/wms_be_build', extra: {'obj': this, 'env': envParams, 'env_list': e, 'approver': a});
     } catch (e) {
       showError('读取配置失败，请检查');
     } finally {
@@ -97,7 +82,7 @@ class JenkinsWmsBe extends JenkinsProjectModel {
     }
   }
 
-  Stream<(String, bool)> buildWmsBe(
+  Stream<(String, bool)> doBuild(
     BuildContext context,
     bool isPro,
     bool installPlugin,
@@ -137,5 +122,33 @@ class JenkinsWmsBe extends JenkinsProjectModel {
     }
 
     return controller.stream;
+  }
+
+  Future<void> _toLogPage() async {
+    final logList = await getLogList();
+    if (logList == null) {
+      return;
+    }
+    context.push('/job/project/wms_be_log', extra: {'obj': this, 'log_list': logList});
+  }
+
+  Future<List<dynamic>?> getLogList() async {
+    final loader = context.read<LoadingProvider>();
+    loader.show();
+    try {
+      final response = await jenkins.dio.post(
+        '${jenkins.url}/job/$name/api/json?tree=builds[id,result,timestamp,actions[parameters[name,value]{3,5},causes[userName]]{,2}]{,10}',
+      );
+
+      if (response.data['builds'] == null) {
+        showInfo('无数据');
+      }
+      return response.data['builds'];
+    } catch (e) {
+      showError('请求失败，请检查网络和配置信息');
+    } finally {
+      loader.hide();
+    }
+    return null;
   }
 }

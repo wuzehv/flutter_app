@@ -3,7 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/theme.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/models/jenkins_wms_be.dart';
+import 'package:jenkins_app/models/jenkins_wms_ui.dart';
 import 'package:jenkins_app/models/loading.dart';
+import 'package:jenkins_app/project_screens/wms_ui_build.dart';
+import 'package:jenkins_app/project_screens/wms_ui_log.dart';
 import 'package:jenkins_app/screens/home.dart';
 import 'package:jenkins_app/screens/jenkins.dart';
 import 'package:jenkins_app/project_screens/wms_be_build.dart';
@@ -61,14 +64,7 @@ final GoRouter _router = GoRouter(
                   builder: (BuildContext context, GoRouterState state) => JenkinsProject(name: state.extra.toString()),
                   routes: <RouteBase>[
                     GoRoute(
-                      path: 'log',
-                      builder: (BuildContext context, GoRouterState state) {
-                        final jenkins = state.extra as Jenkins;
-                        return WmsBeLog(jenkins: jenkins);
-                      },
-                    ),
-                    GoRoute(
-                      path: 'wms_be',
+                      path: 'wms_be_build',
                       builder: (BuildContext context, GoRouterState state) {
                         final extra = state.extra as Map<String, dynamic>;
                         return WmsBeBuild(
@@ -77,6 +73,33 @@ final GoRouter _router = GoRouter(
                           envList: extra['env_list'],
                           approver: extra['approver'],
                         );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'wms_be_log',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return WmsBeLog(jenkins: extra['obj'] as JenkinsWmsBe, logList: extra['log_list']);
+                      },
+                    ),
+
+                    GoRoute(
+                      path: 'wms_ui_build',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return WmsUiBuild(
+                          jenkins: extra['obj'] as JenkinsWmsUi,
+                          env: extra['env'],
+                          envList: extra['env_list'],
+                          approver: extra['approver'],
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'wms_ui_log',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return WmsUiLog(jenkins: extra['obj'] as JenkinsWmsUi, logList: extra['log_list']);
                       },
                     ),
                   ],

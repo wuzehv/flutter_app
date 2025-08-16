@@ -34,6 +34,14 @@ int compareVersions(String v1, String v2) {
   return 0;
 }
 
+void longPrint(String text) {
+  const int chunkSize = 800;
+  for (int i = 0; i < text.length; i += chunkSize) {
+    final end = (i + chunkSize < text.length) ? i + chunkSize : text.length;
+    debugPrint(text.substring(i, end));
+  }
+}
+
 String snakeToCamel(String input) {
   return input.replaceAllMapped(RegExp(r'[_-]([a-z])'), (match) => match.group(1)!.toUpperCase());
 }

@@ -68,6 +68,26 @@ class JenkinsModel {
       showError('操作失败，请检查任务');
     }
   }
+
+  Future<Map<String, dynamic>> getBuildDetail(String name, String id) async {
+    final response = await _getDio().post(
+      '$url/job/$name/$id/api/json?tree=actions[parameters[name,value],causes[userName]],result',
+    );
+    List<dynamic> res = response.data['actions'][0]['parameters'].map((param) => '${param['name']}: ${param['value']}').toList();
+    res.add('提交人: ${response.data['actions'][1]['causes'][0]['userName']}');
+
+    // 获取当前任务是否需要审核
+    Map<String, dynamic> m = {'list': res, 'id': id};
+    if (response.data['result'] == null) {
+      final response2 = await _getDio().post('$url/job/$name/$id/wfapi/pendingInputActions/api/json');
+      if (response2.data is List && response2.data.length >= 1) {
+        m['proceedUrl'] = response2.data[0]['proceedUrl'];
+        m['abortUrl'] = response2.data[0]['abortUrl'];
+      }
+    }
+
+    return m;
+  }
 }
 
 class JenkinsProvider extends ChangeNotifier {
