@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 
 class WmsBeLog extends StatefulWidget {
   final JenkinsWmsBe jenkins;
-  List<dynamic> logList;
+  final List<dynamic> logList;
 
-  WmsBeLog({super.key, required this.jenkins, required this.logList});
+  const WmsBeLog({super.key, required this.jenkins, required this.logList});
 
   @override
   State<StatefulWidget> createState() => _WmsBeLogState();
@@ -16,6 +16,13 @@ class WmsBeLog extends StatefulWidget {
 
 class _WmsBeLogState extends State<WmsBeLog> {
   Map<String, List<Widget>> _childrenMap = {};
+  List<dynamic> _logList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _logList = widget.logList;
+  }
 
   Future<void> _loadChildren(String id) async {
     final loader = context.read<LoadingProvider>();
@@ -95,7 +102,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
     final list = await widget.jenkins.jenkins.getLogList(context, widget.jenkins.name);
     if (list != null) {
       setState(() {
-        widget.logList = list;
+        _logList = list;
       });
     }
   }
@@ -105,7 +112,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.jenkins.name)),
       body: ListView(
-        children: widget.logList.map<Widget>((project) {
+        children: _logList.map<Widget>((project) {
           late Icon i;
           if (project['result'] == 'SUCCESS') {
             i = Icon(Icons.circle, color: Colors.green);

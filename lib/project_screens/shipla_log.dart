@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 
 class ShiplaLog extends StatefulWidget {
   final JenkinsShipla jenkins;
-  List<dynamic> logList;
+  final List<dynamic> logList;
 
-  ShiplaLog({super.key, required this.jenkins, required this.logList});
+  const ShiplaLog({super.key, required this.jenkins, required this.logList});
 
   @override
   State<StatefulWidget> createState() => _ShiplaLogState();
@@ -16,6 +16,13 @@ class ShiplaLog extends StatefulWidget {
 
 class _ShiplaLogState extends State<ShiplaLog> {
   Map<String, List<Widget>> _childrenMap = {};
+  List<dynamic> _logList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _logList = widget.logList;
+  }
 
   Future<void> _loadChildren(String id) async {
     final loader = context.read<LoadingProvider>();
@@ -95,7 +102,7 @@ class _ShiplaLogState extends State<ShiplaLog> {
     final list = await widget.jenkins.jenkins.getLogList(context, widget.jenkins.name);
     if (list != null) {
       setState(() {
-        widget.logList = list;
+        _logList = list;
       });
     }
   }
@@ -105,7 +112,7 @@ class _ShiplaLogState extends State<ShiplaLog> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.jenkins.name)),
       body: ListView(
-        children: widget.logList.map<Widget>((project) {
+        children: _logList.map<Widget>((project) {
           late Icon i;
           if (project['result'] == 'SUCCESS') {
             i = Icon(Icons.circle, color: Colors.green);
