@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/common/global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:provider/provider.dart';
+
+import 'loading.dart';
 
 class JenkinsModel {
   late String? id;
@@ -42,7 +44,7 @@ class JenkinsModel {
 
     String basicAuth = 'Basic ${base64Encode(utf8.encode('$user:$token'))}';
     dio.options.headers['Authorization'] = basicAuth;
-    dio.options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    dio.options.headers['Content-Type'] = Headers.formUrlEncodedContentType;
 
     _dio = dio;
     return dio;
@@ -87,6 +89,26 @@ class JenkinsModel {
     }
 
     return m;
+  }
+
+  Future<List<dynamic>?> getLogList(BuildContext context, String name) async {
+    final loader = context.read<LoadingProvider>();
+    loader.show();
+    try {
+      final response = await _getDio().post(
+        '$url/job/$name/api/json?tree=builds[id,result,timestamp,actions[parameters[name,value]{,5},causes[userName]]{,2}]{,10}',
+      );
+
+      if (response.data['builds'] == null) {
+        showInfo('无数据');
+      }
+      return response.data['builds'];
+    } catch (e) {
+      showError('请求失败，请检查网络和配置信息');
+    } finally {
+      loader.hide();
+    }
+    return null;
   }
 }
 

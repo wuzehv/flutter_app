@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/models/jenkins_wms_be.dart';
+import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 import 'package:jenkins_app/models/loading.dart';
 import 'package:provider/provider.dart';
 
-class WmsBeLog extends StatefulWidget {
-  final JenkinsWmsBe jenkins;
+class WmsFeLog extends StatefulWidget {
+  final JenkinsWmsFe jenkins;
   List<dynamic> logList;
 
-  WmsBeLog({super.key, required this.jenkins, required this.logList});
+  WmsFeLog({super.key, required this.jenkins, required this.logList});
 
   @override
-  State<StatefulWidget> createState() => _WmsBeLogState();
+  State<StatefulWidget> createState() => _WmsFeLogState();
 }
 
-class _WmsBeLogState extends State<WmsBeLog> {
+class _WmsFeLogState extends State<WmsFeLog> {
   Map<String, List<Widget>> _childrenMap = {};
 
   Future<void> _loadChildren(String id) async {
@@ -109,7 +109,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
           late Icon i;
           if (project['result'] == 'SUCCESS') {
             i = Icon(Icons.circle, color: Colors.green);
-          } else if (project['result'] == 'ABORTED') {
+          } else if (project['result'] == 'FAILURE') {
             i = Icon(Icons.circle, color: Colors.grey);
           } else {
             i = Icon(Icons.radio_button_unchecked, color: Colors.blue);
@@ -118,7 +118,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
           return ExpansionTile(
             leading: i,
             title: Text(
-              '【${project['actions'][0]['parameters'][4]['value']}】${project['actions'][0]['parameters'][3]['value']} by ${project['actions'][1]['causes'][0]['userName']}',
+              '【${project['actions'][0]['parameters'][2]['value']}】${project['actions'][0]['parameters'][1]['value']} by ${project['actions'][1]['causes'][0]['userName']}',
             ),
             subtitle: Text(
               DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),

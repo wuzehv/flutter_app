@@ -1,25 +1,20 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/util.dart';
-import 'package:jenkins_app/models/jenkins_wms_be.dart';
-import 'package:jenkins_app/models/jenkins_wms_ui.dart';
+import 'package:jenkins_app/models/jenkins_shipla.dart';
 import 'package:jenkins_app/models/loading.dart';
-import 'package:jenkins_app/screens/jenkins.dart';
 import 'package:provider/provider.dart';
 
-class WmsUiLog extends StatefulWidget {
-  final JenkinsWmsUi jenkins;
+class ShiplaLog extends StatefulWidget {
+  final JenkinsShipla jenkins;
   List<dynamic> logList;
 
-  WmsUiLog({super.key, required this.jenkins, required this.logList});
+  ShiplaLog({super.key, required this.jenkins, required this.logList});
 
   @override
-  State<StatefulWidget> createState() => _WmsUiLogState();
+  State<StatefulWidget> createState() => _ShiplaLogState();
 }
 
-class _WmsUiLogState extends State<WmsUiLog> {
+class _ShiplaLogState extends State<ShiplaLog> {
   Map<String, List<Widget>> _childrenMap = {};
 
   Future<void> _loadChildren(String id) async {
@@ -97,7 +92,7 @@ class _WmsUiLogState extends State<WmsUiLog> {
   }
 
   Future<void> _loadList() async {
-    final list = await widget.jenkins.getLogList();
+    final list = await widget.jenkins.jenkins.getLogList(context, widget.jenkins.name);
     if (list != null) {
       setState(() {
         widget.logList = list;
@@ -114,7 +109,7 @@ class _WmsUiLogState extends State<WmsUiLog> {
           late Icon i;
           if (project['result'] == 'SUCCESS') {
             i = Icon(Icons.circle, color: Colors.green);
-          } else if (project['result'] == 'FAILURE') {
+          } else if (project['result'] == 'FAILURE' || project['result'] == 'ABORTED') {
             i = Icon(Icons.circle, color: Colors.grey);
           } else {
             i = Icon(Icons.radio_button_unchecked, color: Colors.blue);
@@ -123,7 +118,9 @@ class _WmsUiLogState extends State<WmsUiLog> {
           return ExpansionTile(
             leading: i,
             title: Text(
-              '【${project['actions'][0]['parameters'][2]['value']}】${project['actions'][0]['parameters'][1]['value']} by ${project['actions'][1]['causes'][0]['userName']}',
+              project['actions'][0]['causes'] == null
+                  ? '【${project['actions'][0]['parameters'][2]['value']}】${project['actions'][0]['parameters'][4]['value']} by ${project['actions'][1]['causes'][0]['userName']}'
+                  : '【${project['actions'][1]['parameters'][2]['value']}】${project['actions'][1]['parameters'][4]['value']} by ${project['actions'][0]['causes'][0]['userName']}',
             ),
             subtitle: Text(
               DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),

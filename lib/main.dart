@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/theme.dart';
 import 'package:jenkins_app/models/jenkins.dart';
+import 'package:jenkins_app/models/jenkins_shipla.dart';
 import 'package:jenkins_app/models/jenkins_wms_be.dart';
-import 'package:jenkins_app/models/jenkins_wms_ui.dart';
+import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 import 'package:jenkins_app/models/loading.dart';
-import 'package:jenkins_app/project_screens/wms_ui_build.dart';
-import 'package:jenkins_app/project_screens/wms_ui_log.dart';
-import 'package:jenkins_app/screens/home.dart';
-import 'package:jenkins_app/screens/jenkins.dart';
+import 'package:jenkins_app/project_screens/shipla_build.dart';
+import 'package:jenkins_app/project_screens/shipla_log.dart';
 import 'package:jenkins_app/project_screens/wms_be_build.dart';
+import 'package:jenkins_app/project_screens/wms_be_log.dart';
+import 'package:jenkins_app/project_screens/wms_fe_build.dart';
+import 'package:jenkins_app/project_screens/wms_fe_log.dart';
+import 'package:jenkins_app/screens/home.dart';
 import 'package:jenkins_app/screens/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins_job.dart';
 import 'package:jenkins_app/screens/jenkins_project.dart';
-import 'package:jenkins_app/project_screens/wms_be_log.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 class MyApp extends StatelessWidget {
@@ -84,11 +85,11 @@ final GoRouter _router = GoRouter(
                     ),
 
                     GoRoute(
-                      path: 'wms_ui_build',
+                      path: 'wms_fe_build',
                       builder: (BuildContext context, GoRouterState state) {
                         final extra = state.extra as Map<String, dynamic>;
-                        return WmsUiBuild(
-                          jenkins: extra['obj'] as JenkinsWmsUi,
+                        return WmsFeBuild(
+                          jenkins: extra['obj'] as JenkinsWmsFe,
                           env: extra['env'],
                           envList: extra['env_list'],
                           approver: extra['approver'],
@@ -96,10 +97,29 @@ final GoRouter _router = GoRouter(
                       },
                     ),
                     GoRoute(
-                      path: 'wms_ui_log',
+                      path: 'wms_fe_log',
                       builder: (BuildContext context, GoRouterState state) {
                         final extra = state.extra as Map<String, dynamic>;
-                        return WmsUiLog(jenkins: extra['obj'] as JenkinsWmsUi, logList: extra['log_list']);
+                        return WmsFeLog(jenkins: extra['obj'] as JenkinsWmsFe, logList: extra['log_list']);
+                      },
+                    ),
+
+                    GoRoute(
+                      path: 'shipla_build',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return ShiplaBuild(
+                          jenkins: extra['obj'] as JenkinsShipla,
+                          params: extra['params'],
+                          approver: extra['approver'],
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'shipla_log',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return ShiplaLog(jenkins: extra['obj'] as JenkinsShipla, logList: extra['log_list']);
                       },
                     ),
                   ],

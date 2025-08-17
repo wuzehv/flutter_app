@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/global.dart';
@@ -125,30 +123,10 @@ class JenkinsWmsBe extends JenkinsProjectModel {
   }
 
   Future<void> _toLogPage() async {
-    final logList = await getLogList();
+    final logList = await jenkins.getLogList(context, name);
     if (logList == null) {
       return;
     }
     context.push('/job/project/wms_be_log', extra: {'obj': this, 'log_list': logList});
-  }
-
-  Future<List<dynamic>?> getLogList() async {
-    final loader = context.read<LoadingProvider>();
-    loader.show();
-    try {
-      final response = await jenkins.dio.post(
-        '${jenkins.url}/job/$name/api/json?tree=builds[id,result,timestamp,actions[parameters[name,value]{3,5},causes[userName]]{,2}]{,10}',
-      );
-
-      if (response.data['builds'] == null) {
-        showInfo('无数据');
-      }
-      return response.data['builds'];
-    } catch (e) {
-      showError('请求失败，请检查网络和配置信息');
-    } finally {
-      loader.hide();
-    }
-    return null;
   }
 }

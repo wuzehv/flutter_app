@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/global.dart';
@@ -12,11 +9,11 @@ import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/models/loading.dart';
 import 'package:provider/provider.dart';
 
-class JenkinsWmsUi extends JenkinsProjectModel {
+class JenkinsWmsFe extends JenkinsProjectModel {
   final BuildContext context;
   final JenkinsModel jenkins;
 
-  JenkinsWmsUi(this.context, this.jenkins, {required super.name});
+  JenkinsWmsFe(this.context, this.jenkins, {required super.name});
 
   @override
   List<Widget> getOperation() {
@@ -75,7 +72,7 @@ class JenkinsWmsUi extends JenkinsProjectModel {
         a.add(i);
       }
 
-      context.push('/job/project/wms_ui_build', extra: {'obj': this, 'env': envParams, 'env_list': e, 'approver': a});
+      context.push('/job/project/wms_fe_build', extra: {'obj': this, 'env': envParams, 'env_list': e, 'approver': a});
     } catch (e) {
       showError('读取配置失败，请检查');
     } finally {
@@ -85,14 +82,10 @@ class JenkinsWmsUi extends JenkinsProjectModel {
 
   Stream<(String, bool)> doBuild(
     BuildContext context,
-    bool isPro,
-    bool installPlugin,
     List<String> inputEnv,
     String approver,
     String branch,
   ) {
-    var p = installPlugin ? 'Yes' : 'No';
-
     final controller = StreamController<(String, bool)>();
     int remaining = inputEnv.length;
 
@@ -101,11 +94,9 @@ class JenkinsWmsUi extends JenkinsProjectModel {
           .post(
             '${jenkins.url}/job/$name/buildWithParameters',
             data: FormData.fromMap({
-              "branch": branch,
-              "environment": e,
-              'inventory': isPro ? 'All' : 'Single',
+              "deploy_branch": branch,
+              "deploy_environment": e,
               'approver': approver,
-              'install_plugin': p,
             }),
           )
           .then((onValue) {
@@ -126,31 +117,10 @@ class JenkinsWmsUi extends JenkinsProjectModel {
   }
 
   Future<void> _toLogPage() async {
-    final logList = await getLogList();
+    final logList = await jenkins.getLogList(context, name);
     if (logList == null) {
       return;
     }
-    context.push('/job/project/wms_ui_log', extra: {'obj': this, 'log_list': logList});
-  }
-
-  Future<List<dynamic>?> getLogList() async {
-    final loader = context.read<LoadingProvider>();
-    loader.show();
-    try {
-      final response = await jenkins.dio.post(
-        '${jenkins.url}/job/$name/api/json?tree=builds[id,result,timestamp,actions[parameters[name,value]{,5},causes[userName]]{,2}]{,10}',
-      );
-      longPrint(jsonEncode(response.data));
-
-      if (response.data['builds'] == null) {
-        showInfo('无数据');
-      }
-      return response.data['builds'];
-    } catch (e) {
-      showError('请求失败，请检查网络和配置信息');
-    } finally {
-      loader.hide();
-    }
-    return null;
+    context.push('/job/project/wms_fe_log', extra: {'obj': this, 'log_list': logList});
   }
 }

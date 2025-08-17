@@ -1,28 +1,24 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
-import 'package:jenkins_app/models/jenkins_wms_be.dart';
-import 'package:jenkins_app/models/jenkins_wms_ui.dart';
-import 'package:jenkins_app/screens/jenkins.dart';
+import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 
-class WmsUiBuild extends StatefulWidget {
-  final JenkinsWmsUi jenkins;
+class WmsFeBuild extends StatefulWidget {
+  final JenkinsWmsFe jenkins;
   final String env;
   final Map<String, bool> envList;
   final List<String> approver;
 
-  const WmsUiBuild({super.key, required this.jenkins, required this.env, required this.envList, required this.approver});
+  const WmsFeBuild({super.key, required this.jenkins, required this.env, required this.envList, required this.approver});
 
   @override
-  State<StatefulWidget> createState() => _WmsUiBuildState();
+  State<StatefulWidget> createState() => _WmsFeBuildState();
 }
 
-class _WmsUiBuildState extends State<WmsUiBuild> {
+class _WmsFeBuildState extends State<WmsFeBuild> {
   final TextEditingController _branchController = TextEditingController();
   final GlobalKey _formKey = GlobalKey<FormState>();
 
-  bool _switchSelected = false;
   String _approver = '';
 
   @override
@@ -113,7 +109,7 @@ class _WmsUiBuildState extends State<WmsUiBuild> {
                             });
 
                             if (hasTra == hasPro) {
-                              showError('请检查环境，不能同时包含tra和pro');
+                              showError('请检查环境勾选，并且不能同时包含tra和pro');
                               return;
                             }
 
@@ -121,8 +117,6 @@ class _WmsUiBuildState extends State<WmsUiBuild> {
                             var all = true;
                             await for (final (env, success) in widget.jenkins.doBuild(
                               context,
-                              hasPro,
-                              _switchSelected,
                               envList,
                               _approver,
                               _branchController.text,
@@ -137,7 +131,7 @@ class _WmsUiBuildState extends State<WmsUiBuild> {
                             }
 
                             if (!all) {
-                              showSucc('提交失败，请尝试重新提交');
+                              showError('提交失败，请尝试重新提交');
                             } else {
                               await Future.delayed(Duration(milliseconds: 1100));
                               showSucc('提交成功');

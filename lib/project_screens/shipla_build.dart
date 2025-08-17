@@ -1,44 +1,38 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jenkins_app/common/global.dart';
 import 'package:jenkins_app/common/util.dart';
-import 'package:jenkins_app/models/jenkins_wms_be.dart';
+import 'package:jenkins_app/models/jenkins_shipla.dart';
 
-class WmsBeBuild extends StatefulWidget {
-  final JenkinsWmsBe jenkins;
-  final String env;
-  final Map<String, bool> envList;
+class ShiplaBuild extends StatefulWidget {
+  final JenkinsShipla jenkins;
   final List<String> approver;
+  final Map<String, Map<String, bool>> params;
 
-  const WmsBeBuild({super.key, required this.jenkins, required this.env, required this.envList, required this.approver});
+  const ShiplaBuild({super.key, required this.jenkins, required this.approver, required this.params});
 
   @override
-  State<StatefulWidget> createState() => _WmsBeBuildState();
+  State<StatefulWidget> createState() => _ShiplaBuildState();
 }
 
-class _WmsBeBuildState extends State<WmsBeBuild> {
+class _ShiplaBuildState extends State<ShiplaBuild> {
   final TextEditingController _branchController = TextEditingController();
+  final TextEditingController _goBranchController = TextEditingController();
   final GlobalKey _formKey = GlobalKey<FormState>();
-
-  bool _switchSelected = false;
   String _approver = '';
 
   @override
   void initState() {
     super.initState();
     setState(() {
+      _branchController.text = 'master';
+      _goBranchController.text = 'master';
       _approver = widget.approver[0];
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.env == 'tra') {
-      _branchController.text = 'training';
-    } else if (widget.env == 'pro') {
-      _branchController.text = 'master';
-    }
-
     return Scaffold(
       appBar: AppBar(title: Text(widget.jenkins.name)),
       body: SingleChildScrollView(
@@ -46,31 +40,60 @@ class _WmsBeBuildState extends State<WmsBeBuild> {
           key: _formKey,
           child: Column(
             children: <Widget>[
-              SwitchListTile(
-                title: Text('是否安装composer'),
-                value: _switchSelected,
-                onChanged: (value) {
-                  //重新构建页面
-                  setState(() {
-                    _switchSelected = value;
-                  });
-                },
-              ),
-              Divider(),
-              ...widget.envList.keys.map((key) {
+              ...widget.params['projects']!.keys.map((key) {
                 return CheckboxListTile(
                   contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 15),
                   visualDensity: VisualDensity(vertical: -4),
                   title: Text(key),
-                  value: widget.envList[key],
+                  value: widget.params['projects']![key],
                   onChanged: (val) {
                     setState(() {
-                      widget.envList[key] = val!;
+                      widget.params['projects']![key] = val!;
                     });
                   },
                 );
               }).toList(),
               Divider(),
+              ...widget.params['env']!.keys.map((key) {
+                return CheckboxListTile(
+                  contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 15),
+                  visualDensity: VisualDensity(vertical: -4),
+                  title: Text(key),
+                  value: widget.params['env']![key],
+                  onChanged: (val) {
+                    setState(() {
+                      widget.params['env']![key] = val!;
+                    });
+                  },
+                );
+              }).toList(),
+              Divider(),
+              if (widget.jenkins.name == shiplaCt) ...<Widget>[
+                ...widget.params['customers']!.keys.map((key) {
+                  return CheckboxListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 15),
+                    visualDensity: VisualDensity(vertical: -4),
+                    title: Text(key),
+                    value: widget.params['customers']![key],
+                    onChanged: (val) {
+                      setState(() {
+                        widget.params['customers']![key] = val!;
+                      });
+                    },
+                  );
+                }).toList(),
+                Divider(),
+                TextFormField(
+                  controller: _goBranchController,
+                  decoration: InputDecoration(labelText: "cttask分支", hintText: "cttask分支", prefixIcon: Icon(Icons.fork_right)),
+                  validator: (v) => v!.trim().isNotEmpty ? null : "",
+                ),
+              ],
+              TextFormField(
+                controller: _branchController,
+                decoration: InputDecoration(labelText: "分支", hintText: "分支", prefixIcon: Icon(Icons.fork_right)),
+                validator: (v) => v!.trim().isNotEmpty ? null : "",
+              ),
               ...widget.approver.map((key) {
                 return RadioListTile(
                   contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 15),
@@ -86,12 +109,6 @@ class _WmsBeBuildState extends State<WmsBeBuild> {
                   groupValue: _approver,
                 );
               }).toList(),
-              Divider(),
-              TextFormField(
-                controller: _branchController,
-                decoration: InputDecoration(labelText: "分支", hintText: "分支", prefixIcon: Icon(Icons.fork_right)),
-                validator: (v) => v!.trim().isNotEmpty ? null : "",
-              ),
               Padding(
                 padding: const EdgeInsets.only(top: 20.0),
                 child: Row(
@@ -108,7 +125,7 @@ class _WmsBeBuildState extends State<WmsBeBuild> {
                             List<String> envList = [];
                             var hasTra = false;
                             var hasPro = false;
-                            widget.envList.forEach((k, v) {
+                            widget.params['env']!.forEach((k, v) {
                               if (v && k.toLowerCase().contains('tra')) {
                                 hasTra = true;
                               }
@@ -126,22 +143,41 @@ class _WmsBeBuildState extends State<WmsBeBuild> {
                               return;
                             }
 
+                            if (((widget.params['customers'] ?? {})['shipla'] ?? false) && hasPro) {
+                              showError('生产环境不能选择shipla');
+                              return;
+                            }
+
+                            if ((widget.params['customers'] ?? {}).isNotEmpty &&
+                                !((widget.params['customers'] ?? {})['shipla'] ?? false) &&
+                                hasTra) {
+                              showError('tra环境只能选择shipla');
+                              return;
+                            }
+
+                            final projectList = widget.params['projects']!.entries
+                                .where((e) => e.value)
+                                .map((e) => e.key)
+                                .toList();
+
+                            final customerList = (widget.params['customers'] ?? {}).entries
+                                .where((e) => e.value)
+                                .map((e) => e.key)
+                                .toList();
+
                             showInfo('开始提交，请等待');
                             var all = true;
-                            await for (final (env, success) in widget.jenkins.doBuild(
+                            await for (final success in widget.jenkins.doBuild(
                               context,
-                              hasPro,
-                              _switchSelected,
+                              projectList,
                               envList,
-                              _approver,
+                              customerList,
                               _branchController.text,
+                              _goBranchController.text,
+                              _approver,
                             )) {
                               if (!success) {
                                 all = false;
-                              } else {
-                                setState(() {
-                                  widget.envList[env] = !success;
-                                });
                               }
                             }
 

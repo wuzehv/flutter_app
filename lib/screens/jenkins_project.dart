@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:provider/provider.dart';
@@ -37,78 +36,6 @@ class _JenkinsProjectState extends State<JenkinsProject> {
           );
         },
       ),
-      // body: Consumer<JenkinsProjectProvider>(
-      //   builder: (context, provider, child) {
-      //     return ListView.builder(
-      //       itemCount: provider.projects.length,
-      //       itemBuilder: (context, index) {
-      //         return ExpansionTile(
-      //           title: Text(provider.projects[index].name),
-      //           onExpansionChanged: (bool expanded) {
-      //             if (expanded) {
-      //               context.read<JenkinsProjectProvider>().getOperation(provider.projects[index].name);
-      //             }
-      //           },
-      //           children: provider.getOperation(provider.projects[index].name),
-      //         );
-      //       },
-      //     );
-      //   },
-      // ),
-      // body: ListView(
-      // children: (widget.jenkins.projects ?? []).map<Widget>((project) {
-      //   return ExpansionTile(
-      //     title: Text(project),
-      //     children: [
-      //       Row(
-      //         mainAxisAlignment: MainAxisAlignment.end,
-      //         children: [
-      //           Column(
-      //             children: [
-      //               Row(
-      //                 children: [
-      //                   ElevatedButton(
-      //                     onPressed: () => widget.jenkins.toProjectPage(context, project, 'tra'),
-      //                     child: Text("tra"),
-      //                   ),
-      //                   SizedBox(width: 7),
-      //                   ElevatedButton(
-      //                     onPressed: () => widget.jenkins.toProjectPage(context, project, 'pro'),
-      //                     child: Text("pro"),
-      //                   ),
-      //                   SizedBox(width: 7),
-      //                   ElevatedButton(
-      //                     onPressed: () => widget.jenkins.toProjectPage(context, project, 'customize'),
-      //                     child: Text("自定义"),
-      //                   ),
-      //                   SizedBox(width: 7),
-      //                   ElevatedButton.icon(
-      //                     onPressed: () async {
-      //                       if (!widget.jenkins.checkProjectImpl(project)) {
-      //                         showError('当前项目未实现');
-      //                         return;
-      //                       }
-      //                       try {
-      //                         await widget.jenkins.getProjectBuildLog(project);
-      //                         context.push('/job/project/log', extra: widget.jenkins);
-      //                       } catch (e) {
-      //                         print(e);
-      //                         showError('请求失败，请检查网络和配置信息');
-      //                       }
-      //                     },
-      //                     icon: Icon(Icons.playlist_add_check_outlined),
-      //                     label: Text("审核"),
-      //                   ),
-      //                 ],
-      //               ),
-      //             ],
-      //           ),
-      //         ],
-      //       ),
-      //     ],
-      //   );
-      // }).toList(),
-      // ),
     );
   }
 }
