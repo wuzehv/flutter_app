@@ -72,23 +72,35 @@ class JenkinsModel {
   }
 
   Future<Map<String, dynamic>> getBuildDetail(String name, String id) async {
-    final response = await _getDio().post(
-      '$url/job/$name/$id/api/json?tree=actions[parameters[name,value],causes[userName]],result',
-    );
-    List<dynamic> res = response.data['actions'][0]['parameters'].map((param) => '${param['name']}: ${param['value']}').toList();
-    res.add('提交人: ${response.data['actions'][1]['causes'][0]['userName']}');
+    try {
+      final response = await _getDio().post(
+        '$url/job/$name/$id/api/json?tree=actions[parameters[name,value],causes[userName]],result',
+      );
 
-    // 获取当前任务是否需要审核
-    Map<String, dynamic> m = {'list': res, 'id': id};
-    if (response.data['result'] == null) {
-      final response2 = await _getDio().post('$url/job/$name/$id/wfapi/pendingInputActions/api/json');
-      if (response2.data is List && response2.data.length >= 1) {
-        m['proceedUrl'] = response2.data[0]['proceedUrl'];
-        m['abortUrl'] = response2.data[0]['abortUrl'];
+      // 兼容参数和审核人顺序相反情况，目前只有shipla存在
+      var idx = response.data['actions'][0]['causes'] == null ? [0, 1] : [1, 0];
+
+      List<dynamic> res = response.data['actions'][idx[0]]['parameters']
+          .map((param) => '${param['name']}: ${param['value']}')
+          .toList();
+      res.add('提交人: ${response.data['actions'][idx[1]]['causes'][0]['userName']}');
+
+      // 获取当前任务是否需要审核
+      Map<String, dynamic> m = {'list': res, 'id': id};
+      if (response.data['result'] == null) {
+        final response2 = await _getDio().post('$url/job/$name/$id/wfapi/pendingInputActions/api/json');
+        if (response2.data is List && response2.data.length >= 1) {
+          m['proceedUrl'] = response2.data[0]['proceedUrl'];
+          m['abortUrl'] = response2.data[0]['abortUrl'];
+        }
       }
+
+      return m;
+    } catch (e) {
+      showError('读取失败，请检查当前构建信息');
     }
 
-    return m;
+    return {'list': []};
   }
 
   Future<List<dynamic>?> getLogList(BuildContext context, String name) async {
