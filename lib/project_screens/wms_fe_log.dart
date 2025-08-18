@@ -116,7 +116,7 @@ class _WmsFeLogState extends State<WmsFeLog> {
           late Icon i;
           if (project['result'] == 'SUCCESS') {
             i = Icon(Icons.circle, color: Colors.green);
-          } else if (project['result'] == 'FAILURE') {
+          } else if (project['result'] == 'FAILURE' || project['result'] == 'ABORTED') {
             i = Icon(Icons.circle, color: Colors.grey);
           } else {
             i = Icon(Icons.radio_button_unchecked, color: Colors.blue);
