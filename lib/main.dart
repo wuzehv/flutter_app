@@ -7,14 +7,12 @@ import 'package:jenkins_app/models/jenkins_wms_be.dart';
 import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 import 'package:jenkins_app/models/loading.dart';
 import 'package:jenkins_app/project_screens/shipla_build.dart';
-import 'package:jenkins_app/project_screens/shipla_log.dart';
 import 'package:jenkins_app/project_screens/wms_be_build.dart';
-import 'package:jenkins_app/project_screens/wms_be_log.dart';
 import 'package:jenkins_app/project_screens/wms_fe_build.dart';
-import 'package:jenkins_app/project_screens/wms_fe_log.dart';
 import 'package:jenkins_app/screens/home.dart';
 import 'package:jenkins_app/screens/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins_job.dart';
+import 'package:jenkins_app/screens/jenkins_log.dart';
 import 'package:jenkins_app/screens/jenkins_project.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -65,6 +63,14 @@ final GoRouter _router = GoRouter(
                   builder: (BuildContext context, GoRouterState state) => JenkinsProject(name: state.extra.toString()),
                   routes: <RouteBase>[
                     GoRoute(
+                      path: 'log',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return JenkinsLog(jenkins: extra['obj'] as JenkinsModel, logList: extra['log_list'], name: extra['name']);
+                      },
+                    ),
+
+                    GoRoute(
                       path: 'wms_be_build',
                       builder: (BuildContext context, GoRouterState state) {
                         final extra = state.extra as Map<String, dynamic>;
@@ -76,14 +82,6 @@ final GoRouter _router = GoRouter(
                         );
                       },
                     ),
-                    GoRoute(
-                      path: 'wms_be_log',
-                      builder: (BuildContext context, GoRouterState state) {
-                        final extra = state.extra as Map<String, dynamic>;
-                        return WmsBeLog(jenkins: extra['obj'] as JenkinsWmsBe, logList: extra['log_list']);
-                      },
-                    ),
-
                     GoRoute(
                       path: 'wms_fe_build',
                       builder: (BuildContext context, GoRouterState state) {
@@ -97,14 +95,6 @@ final GoRouter _router = GoRouter(
                       },
                     ),
                     GoRoute(
-                      path: 'wms_fe_log',
-                      builder: (BuildContext context, GoRouterState state) {
-                        final extra = state.extra as Map<String, dynamic>;
-                        return WmsFeLog(jenkins: extra['obj'] as JenkinsWmsFe, logList: extra['log_list']);
-                      },
-                    ),
-
-                    GoRoute(
                       path: 'shipla_build',
                       builder: (BuildContext context, GoRouterState state) {
                         final extra = state.extra as Map<String, dynamic>;
@@ -113,13 +103,6 @@ final GoRouter _router = GoRouter(
                           params: extra['params'],
                           approver: extra['approver'],
                         );
-                      },
-                    ),
-                    GoRoute(
-                      path: 'shipla_log',
-                      builder: (BuildContext context, GoRouterState state) {
-                        final extra = state.extra as Map<String, dynamic>;
-                        return ShiplaLog(jenkins: extra['obj'] as JenkinsShipla, logList: extra['log_list']);
                       },
                     ),
                   ],

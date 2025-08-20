@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/models/jenkins_wms_be.dart';
+import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/models/loading.dart';
 import 'package:provider/provider.dart';
 
-class WmsBeLog extends StatefulWidget {
-  final JenkinsWmsBe jenkins;
+class JenkinsLog extends StatefulWidget {
+  final JenkinsModel jenkins;
+  final String name;
   final List<dynamic> logList;
 
-  const WmsBeLog({super.key, required this.jenkins, required this.logList});
+  const JenkinsLog({super.key, required this.jenkins, required this.logList, required this.name});
 
   @override
-  State<StatefulWidget> createState() => _WmsBeLogState();
+  State<StatefulWidget> createState() => _JenkinsLogState();
 }
 
-class _WmsBeLogState extends State<WmsBeLog> {
+class _JenkinsLogState extends State<JenkinsLog> {
   Map<String, List<Widget>> _childrenMap = {};
   List<dynamic> _logList = [];
 
@@ -27,7 +28,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
   Future<void> _loadChildren(String id) async {
     final loader = context.read<LoadingProvider>();
     loader.show();
-    final tmp = await widget.jenkins.jenkins.getBuildDetail(widget.jenkins.name, id);
+    final tmp = await widget.jenkins.getBuildDetail(widget.name, id);
     loader.hide();
     setState(() {
       var m = tmp['list']
@@ -54,7 +55,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
                           TextButton(
                             child: Text("确认"),
                             onPressed: () {
-                              widget.jenkins.jenkins.auditBuild(tmp['abortUrl']);
+                              widget.jenkins.auditBuild(tmp['abortUrl']);
                               context.pop();
                             },
                           ),
@@ -78,7 +79,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
                           TextButton(
                             child: Text("确认"),
                             onPressed: () {
-                              widget.jenkins.jenkins.auditBuild(tmp['proceedUrl']);
+                              widget.jenkins.auditBuild(tmp['proceedUrl']);
                               context.pop();
                             },
                           ),
@@ -99,7 +100,7 @@ class _WmsBeLogState extends State<WmsBeLog> {
   }
 
   Future<void> _loadList() async {
-    final list = await widget.jenkins.jenkins.getLogList(context, widget.jenkins.name);
+    final list = await widget.jenkins.getLogList(context, widget.name);
     if (list != null) {
       setState(() {
         _logList = list;
@@ -110,13 +111,13 @@ class _WmsBeLogState extends State<WmsBeLog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.jenkins.name)),
+      appBar: AppBar(title: Text(widget.name)),
       body: ListView(
         children: _logList.map<Widget>((project) {
           late Icon i;
           if (project['result'] == 'SUCCESS') {
             i = Icon(Icons.circle, color: Colors.green);
-          } else if (project['result'] == 'FAILURE' || project['result'] == 'ABORTED') {
+          } else if (project['result'] == 'FAILURE') {
             i = Icon(Icons.circle, color: Colors.grey);
           } else {
             i = Icon(Icons.radio_button_unchecked, color: Colors.blue);
@@ -124,13 +125,8 @@ class _WmsBeLogState extends State<WmsBeLog> {
 
           return ExpansionTile(
             leading: i,
-            title: Text(
-              '【${project['actions'][0]['parameters'][4]['value']}】${project['actions'][0]['parameters'][3]['value']} by ${project['actions'][1]['causes'][0]['userName']}',
-            ),
-            subtitle: Text(
-              DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),
-              style: TextStyle(color: Colors.grey, fontSize: 13.5),
-            ),
+            title: Text(project['title']),
+            subtitle: Text(project['time'], style: TextStyle(color: Colors.grey, fontSize: 13.5)),
             onExpansionChanged: (bool expanded) async {
               if (expanded) {
                 await _loadChildren(project['id'].toString());

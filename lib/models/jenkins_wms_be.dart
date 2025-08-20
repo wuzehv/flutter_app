@@ -32,7 +32,7 @@ class JenkinsWmsBe extends JenkinsProjectModel {
                   ElevatedButton(onPressed: () => _toBuildPage('customize'), child: Text("自定义")),
                   SizedBox(width: 7),
                   ElevatedButton.icon(
-                    onPressed: () => _toLogPage(),
+                    onPressed: () => jenkins.toLogPage(context, name),
                     icon: Icon(Icons.playlist_add_check_outlined),
                     label: Text("审核"),
                   ),
@@ -120,13 +120,5 @@ class JenkinsWmsBe extends JenkinsProjectModel {
     }
 
     return controller.stream;
-  }
-
-  Future<void> _toLogPage() async {
-    final logList = await jenkins.getLogList(context, name);
-    if (logList == null) {
-      return;
-    }
-    context.push('/job/project/wms_be_log', extra: {'obj': this, 'log_list': logList});
   }
 }

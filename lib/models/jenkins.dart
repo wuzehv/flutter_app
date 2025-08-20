@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
@@ -103,7 +104,7 @@ class JenkinsModel {
     return {'list': []};
   }
 
-  Future<List<dynamic>?> getLogList(BuildContext context, String name) async {
+  Future<List<Map<String, dynamic>>?> getLogList(BuildContext context, String name) async {
     final loader = context.read<LoadingProvider>();
     loader.show();
     try {
@@ -113,14 +114,68 @@ class JenkinsModel {
 
       if (response.data['builds'] == null) {
         showInfo('无数据');
+        return null;
       }
-      return response.data['builds'];
+
+      final List<Map<String, dynamic>> result = response.data['builds'].map<Map<String, dynamic>>((project) {
+        late final String param1;
+        late final String param2;
+        late final String user;
+
+        switch (name) {
+          case wmsUi:
+          case wmsBossUi:
+            param1 = project['actions'][0]['parameters'][2]['value'];
+            param2 = project['actions'][0]['parameters'][1]['value'];
+            user = project['actions'][1]['causes'][0]['userName'];
+            break;
+          case shiplaCt:
+          case shiplaGo:
+          case shiplaWeb:
+            final idx = project['actions'][0]['causes'] == null ? [0, 1] : [1, 0];
+            param1 = project['actions'][idx[0]]['parameters'][2]['value'];
+            param2 = project['actions'][idx[0]]['parameters'][4]['value'];
+            user = project['actions'][idx[1]]['causes'][0]['userName'];
+            break;
+          default:
+            param1 = project['actions'][0]['parameters'][4]['value'];
+            param2 = project['actions'][0]['parameters'][3]['value'];
+            user = project['actions'][1]['causes'][0]['userName'];
+            break;
+        }
+
+        var res = 'OTHER';
+        if (project['result'] == 'SUCCESS') {
+          res = 'SUCCESS';
+        } else if (project['result'] == 'FAILURE' || project['result'] == 'ABORTED') {
+          res = 'FAILURE';
+        }
+
+        final title = "【$param1】$param2 by $user";
+
+        return {
+          'id': project['id'],
+          'title': title,
+          'time': DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),
+          'result': res,
+        };
+      }).toList();
+
+      return result;
     } catch (e) {
       showError('请求失败，请检查网络和配置信息');
     } finally {
       loader.hide();
     }
     return null;
+  }
+
+  Future<void> toLogPage(BuildContext context, String name) async {
+    final logList = await getLogList(context, name);
+    if (logList == null) {
+      return;
+    }
+    context.push('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList});
   }
 }
 
