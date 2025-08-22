@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/global.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
-import 'package:jenkins_app/models/loading.dart';
+import 'package:jenkins_app/common/loading.dart';
 import 'package:provider/provider.dart';
 
 class JenkinsWmsBe extends JenkinsProjectModel {

@@ -5,7 +5,7 @@ import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/models/jenkins_shipla.dart';
 import 'package:jenkins_app/models/jenkins_wms_be.dart';
 import 'package:jenkins_app/models/jenkins_wms_fe.dart';
-import 'package:jenkins_app/models/loading.dart';
+import 'package:jenkins_app/common/loading.dart';
 import 'package:jenkins_app/project_screens/shipla_build.dart';
 import 'package:jenkins_app/project_screens/wms_be_build.dart';
 import 'package:jenkins_app/project_screens/wms_fe_build.dart';

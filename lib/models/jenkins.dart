@@ -9,7 +9,7 @@ import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:provider/provider.dart';
 
-import 'loading.dart';
+import '../common/loading.dart';
 
 class JenkinsModel {
   late String? id;
@@ -105,8 +105,6 @@ class JenkinsModel {
   }
 
   Future<List<Map<String, dynamic>>?> getLogList(BuildContext context, String name) async {
-    final loader = context.read<LoadingProvider>();
-    loader.show();
     try {
       final response = await _getDio().post(
         '$url/job/$name/api/json?tree=builds[id,result,timestamp,actions[parameters[name,value]{,5},causes[userName]]{,2}]{,10}',
@@ -154,7 +152,7 @@ class JenkinsModel {
         final title = "【$param1】$param2 by $user";
 
         return {
-          'id': project['id'],
+          'id': project['id'].toString(),
           'title': title,
           'time': DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),
           'result': res,
@@ -164,14 +162,16 @@ class JenkinsModel {
       return result;
     } catch (e) {
       showError('请求失败，请检查网络和配置信息');
-    } finally {
-      loader.hide();
     }
+
     return null;
   }
 
   Future<void> toLogPage(BuildContext context, String name) async {
+    final loader = context.read<LoadingProvider>();
+    loader.show();
     final logList = await getLogList(context, name);
+    loader.hide();
     if (logList == null) {
       return;
     }

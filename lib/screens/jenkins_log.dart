@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jenkins_app/common/loading_icon.dart';
+import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
-import 'package:jenkins_app/models/loading.dart';
+import 'package:jenkins_app/common/loading.dart';
 import 'package:provider/provider.dart';
 
 class JenkinsLog extends StatefulWidget {
@@ -16,13 +20,17 @@ class JenkinsLog extends StatefulWidget {
 }
 
 class _JenkinsLogState extends State<JenkinsLog> {
-  Map<String, List<Widget>> _childrenMap = {};
+  List<Widget> _childrenMap = [];
   List<dynamic> _logList = [];
+  late Timer _timer;
 
   @override
   void initState() {
     super.initState();
     _logList = widget.logList;
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _loadList();
+    });
   }
 
   Future<void> _loadChildren(String id) async {
@@ -95,11 +103,18 @@ class _JenkinsLogState extends State<JenkinsLog> {
         );
       }
 
-      _childrenMap[id] = m;
+      _childrenMap = m;
     });
   }
 
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadList() async {
+    showInfo('同步中......');
     final list = await widget.jenkins.getLogList(context, widget.name);
     if (list != null) {
       setState(() {
@@ -114,13 +129,13 @@ class _JenkinsLogState extends State<JenkinsLog> {
       appBar: AppBar(title: Text(widget.name)),
       body: ListView(
         children: _logList.map<Widget>((project) {
-          late Icon i;
+          late Widget i;
           if (project['result'] == 'SUCCESS') {
-            i = Icon(Icons.circle, color: Colors.green);
+            i = Icon(Icons.check_circle, color: Colors.green);
           } else if (project['result'] == 'FAILURE') {
-            i = Icon(Icons.circle, color: Colors.grey);
+            i = Icon(Icons.cancel, color: Colors.black54);
           } else {
-            i = Icon(Icons.radio_button_unchecked, color: Colors.blue);
+            i = LoadingIcon();
           }
 
           return ExpansionTile(
@@ -129,10 +144,10 @@ class _JenkinsLogState extends State<JenkinsLog> {
             subtitle: Text(project['time'], style: TextStyle(color: Colors.grey, fontSize: 13.5)),
             onExpansionChanged: (bool expanded) async {
               if (expanded) {
-                await _loadChildren(project['id'].toString());
+                await _loadChildren(project['id']);
               }
             },
-            children: _childrenMap[project['id'].toString()] ?? [],
+            children: _childrenMap,
           );
         }).toList(),
       ),
