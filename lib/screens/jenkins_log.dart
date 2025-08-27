@@ -133,7 +133,6 @@ class _JenkinsLogState extends State<JenkinsLog> {
             child: LinearProgressIndicator(
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation(Colors.blue),
-              value: null,
             ),
           ),
           ..._logList.map<Widget>((project) {
