@@ -114,7 +114,6 @@ class _JenkinsLogState extends State<JenkinsLog> {
   }
 
   Future<void> _loadList() async {
-    showInfo('同步中......');
     final list = await widget.jenkins.getLogList(context, widget.name);
     if (list != null) {
       setState(() {
@@ -128,32 +127,45 @@ class _JenkinsLogState extends State<JenkinsLog> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.name)),
       body: ListView(
-        children: _logList.map<Widget>((project) {
-          late Widget i;
-          if (project['result'] == 'SUCCESS') {
-            i = Icon(Icons.check_circle, color: Colors.green);
-          } else if (project['result'] == 'FAILURE') {
-            i = Icon(Icons.cancel, color: Colors.black54);
-          } else {
-            i = LoadingIcon();
-          }
+        children: [
+          SizedBox(
+            height: 5,
+            child: LinearProgressIndicator(
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation(Colors.blue),
+              value: null,
+            ),
+          ),
+          ..._logList.map<Widget>((project) {
+            late Widget i;
+            if (project['result'] == 'SUCCESS') {
+              i = Icon(Icons.check_circle, color: Colors.green);
+            } else if (project['result'] == 'FAILURE') {
+              i = Icon(Icons.cancel, color: Colors.black54);
+            } else {
+              i = LoadingIcon();
+            }
 
-          return ExpansionTile(
-            leading: i,
-            title: Text(project['title']),
-            subtitle: Text(project['time'], style: TextStyle(color: Colors.grey, fontSize: 13.5)),
-            onExpansionChanged: (bool expanded) async {
-              if (expanded) {
-                await _loadChildren(project['id']);
-              }
-            },
-            children: _childrenMap,
-          );
-        }).toList(),
+            return ExpansionTile(
+              leading: i,
+              title: Text(project['title']),
+              subtitle: Text(project['time'], style: TextStyle(color: Colors.grey, fontSize: 13.5)),
+              onExpansionChanged: (bool expanded) async {
+                if (expanded) {
+                  await _loadChildren(project['id']);
+                }
+              },
+              children: _childrenMap,
+            );
+          }).toList(),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'refresh',
-        onPressed: _loadList,
+        onPressed: () {
+          showInfo('同步中......');
+          _loadList();
+        },
         tooltip: '刷新',
         shape: CircleBorder(),
         child: const Icon(Icons.refresh),
