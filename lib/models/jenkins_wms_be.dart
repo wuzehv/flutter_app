@@ -49,7 +49,7 @@ class JenkinsWmsBe extends JenkinsProjectModel {
   Future<void> _toBuildPage(String env) async {
     final loader = context.read<LoadingProvider>();
     loader.show();
-    var idx = name != wmsNewApiPhp ? 2 : 4;
+    var idx = name != wmsNewApiPhp ? 2 : 3;
     var envParams = env.toLowerCase();
     try {
       final response = await jenkins.dio.post(
