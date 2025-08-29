@@ -150,7 +150,7 @@ class _WmsBeBuildState extends State<WmsBeBuild> {
                             } else {
                               await Future.delayed(Duration(milliseconds: 1100));
                               showSucc('提交成功');
-                              context.pop();
+                              widget.jenkins.jenkins.toLogPage(context, widget.jenkins.name, false);
                             }
                           }
                         },

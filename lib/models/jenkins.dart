@@ -167,7 +167,7 @@ class JenkinsModel {
     return null;
   }
 
-  Future<void> toLogPage(BuildContext context, String name) async {
+  Future<void> toLogPage(BuildContext context, String name, [bool fromList = true]) async {
     final loader = context.read<LoadingProvider>();
     loader.show();
     final logList = await getLogList(context, name);
@@ -175,7 +175,9 @@ class JenkinsModel {
     if (logList == null) {
       return;
     }
-    context.push('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList});
+    fromList
+        ? context.push('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList})
+        : context.pushReplacement('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList});
   }
 }
 
