@@ -163,7 +163,8 @@ class _HomeState extends State<Home> {
       drawer: LeftDrawer(),
       floatingActionButton: FloatingActionButton(
         heroTag: 'add',
-        onPressed: () => context.push('/config'),
+        // onPressed: () => context.push('/jenkins_config'),
+        onPressed: () => context.push('/codeup_config'),
         tooltip: '添加配置',
         shape: CircleBorder(),
         child: const Icon(Icons.add),

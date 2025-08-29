@@ -9,6 +9,7 @@ import 'package:jenkins_app/common/loading.dart';
 import 'package:jenkins_app/project_screens/shipla_build.dart';
 import 'package:jenkins_app/project_screens/wms_be_build.dart';
 import 'package:jenkins_app/project_screens/wms_fe_build.dart';
+import 'package:jenkins_app/screens/codeup_config.dart';
 import 'package:jenkins_app/screens/home.dart';
 import 'package:jenkins_app/screens/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins_job.dart';
@@ -112,8 +113,12 @@ final GoRouter _router = GoRouter(
           ],
         ),
         GoRoute(
-          path: '/config',
+          path: '/jenkins_config',
           builder: (BuildContext context, GoRouterState state) => JenkinsConfig(jenkins: state.extra as JenkinsModel?),
+        ),
+        GoRoute(
+          path: '/codeup_config',
+          builder: (BuildContext context, GoRouterState state) => CodeUpConfig(jenkins: state.extra as JenkinsModel?),
         ),
       ],
     ),

@@ -24,7 +24,7 @@ class _JenkinsItemState extends State<JenkinsItem> {
         motion: const ScrollMotion(),
         children: [
           SlidableAction(
-            onPressed: (_) => context.push('/config', extra: widget.jenkins),
+            onPressed: (_) => context.push('/jenkins_config', extra: widget.jenkins),
             backgroundColor: Colors.blue,
             foregroundColor: Colors.white,
             icon: Icons.edit,
