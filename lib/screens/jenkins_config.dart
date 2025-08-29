@@ -68,11 +68,12 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
                 decoration: InputDecoration(labelText: "用户名", hintText: "jenkins登录用户名", prefixIcon: Icon(Icons.person)),
                 validator: (v) => v!.trim().isNotEmpty ? null : "",
               ),
-              TextFormField(
-                controller: _tokenController,
-                decoration: InputDecoration(labelText: "Token", hintText: "jenkins用户Token，不是密码", prefixIcon: Icon(Icons.lock)),
-                validator: (v) => v!.trim().isNotEmpty ? null : "",
-              ),
+              if (_id == null)
+                TextFormField(
+                  controller: _tokenController,
+                  decoration: InputDecoration(labelText: "Token", hintText: "jenkins用户Token，不是密码", prefixIcon: Icon(Icons.lock)),
+                  validator: (v) => v!.trim().isNotEmpty ? null : "",
+                ),
               TextFormField(
                 autofocus: true,
                 controller: _remarkController,
