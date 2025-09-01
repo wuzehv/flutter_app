@@ -12,6 +12,8 @@ class CodeUpModel {
   final String token;
   final String remark;
 
+  late List<Map<String, dynamic>> projectList;
+
   Dio? _dio;
 
   Dio get dio => _dio!;
@@ -44,10 +46,19 @@ class CodeUpModel {
     return dio;
   }
 
-  Future<List<String>> getProjectList(int page) async {
+  Future<void> getProjectList(int page) async {
     page = page <= 0 ? 1 : page;
-    final response = await _getDio().post('$url/$orgId/repositories?orderBy=last_activity_at&perPage=10&sort=desc&page=$page');
-    return List<String>.from(response.data['jobs'].map((e) => e['name']));
+    final response = await _getDio().get('$url/$orgId/repositories?orderBy=last_activity_at&perPage=10&sort=desc&page=$page');
+    projectList = List<Map<String, dynamic>>.from(
+      response.data.map(
+        (e) => {
+          'id': e['id'],
+          'name': removeFirstSegment(e['pathWithNamespace']),
+          'update': formatChatTime(e['lastActivityAt']),
+          'desc': e['description'],
+        },
+      ),
+    );
   }
 
   Future<List<String>> getProjectMrList(int projectId, String status, int page) async {

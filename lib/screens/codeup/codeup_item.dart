@@ -51,12 +51,12 @@ class _CodeUpItemState extends State<CodeUpItem> {
           style: TextStyle(color: Colors.grey, fontSize: 13.5),
         ),
         onTap: () async {
-          // try {
-          //   await context.read<JenkinsJobProvider>().setJenkins(widget.codeup).fetchJobs();
-          //   context.push('/codeup/project', extra: widget.codeup.remark);
-          // } catch (e) {
-          //   showError('请求失败，请检查网络和配置信息');
-          // }
+          try {
+            await widget.codeup.getProjectList(1);
+            context.push('/codeup/project', extra: widget.codeup);
+          } catch (e) {
+            showError('请求失败，请检查网络和配置信息');
+          }
         },
       ),
     );

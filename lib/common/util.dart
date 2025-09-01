@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 
 String getRandomString(int length) {
@@ -48,4 +49,30 @@ void showSucc(String txt) {
 
 void showInfo(String txt) {
   showToast(txt, backgroundColor: Colors.orangeAccent, position: ToastPosition.bottom);
+}
+
+String removeFirstSegment(String path) {
+  if (path.contains('/')) {
+    return path.substring(path.indexOf('/') + 1);
+  }
+
+  return path;
+}
+
+String formatChatTime(String timeStr) {
+  DateTime time = DateTime.parse(timeStr);
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final aDate = DateTime(time.year, time.month, time.day);
+
+  final difference = today.difference(aDate).inDays;
+
+  time = time.add(Duration(hours: 8));
+  if (difference == 0) {
+    return "今天 ${DateFormat.Hm().format(time)}";
+  } else if (difference == 1) {
+    return "昨天 ${DateFormat.Hm().format(time)}";
+  } else {
+    return DateFormat("yyyy-MM-dd HH:mm").format(time);
+  }
 }
