@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/theme.dart';
+import 'package:jenkins_app/models/codeup.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/models/jenkins_shipla.dart';
 import 'package:jenkins_app/models/jenkins_wms_be.dart';
 import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 import 'package:jenkins_app/common/loading.dart';
-import 'package:jenkins_app/project_screens/shipla_build.dart';
-import 'package:jenkins_app/project_screens/wms_be_build.dart';
-import 'package:jenkins_app/project_screens/wms_fe_build.dart';
-import 'package:jenkins_app/screens/codeup_config.dart';
+import 'package:jenkins_app/screens/codeup/codeup.dart';
+import 'package:jenkins_app/screens/jenkins/project_screens/shipla_build.dart';
+import 'package:jenkins_app/screens/jenkins/project_screens/wms_be_build.dart';
+import 'package:jenkins_app/screens/jenkins/project_screens/wms_fe_build.dart';
+import 'package:jenkins_app/screens/codeup/codeup_config.dart';
 import 'package:jenkins_app/screens/home.dart';
-import 'package:jenkins_app/screens/jenkins_config.dart';
-import 'package:jenkins_app/screens/jenkins_job.dart';
-import 'package:jenkins_app/screens/jenkins_log.dart';
-import 'package:jenkins_app/screens/jenkins_project.dart';
+import 'package:jenkins_app/screens/jenkins/jenkins_config.dart';
+import 'package:jenkins_app/screens/jenkins/jenkins_job.dart';
+import 'package:jenkins_app/screens/jenkins/jenkins_log.dart';
+import 'package:jenkins_app/screens/jenkins/jenkins_project.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 
@@ -110,6 +112,23 @@ final GoRouter _router = GoRouter(
                 ),
               ],
             ),
+            GoRoute(
+              path: 'codeup',
+              builder: (BuildContext context, GoRouterState state) => CodeUp(),
+              routes: <RouteBase>[
+                GoRoute(
+                  path: 'project',
+                  builder: (BuildContext context, GoRouterState state) => JenkinsConfig(jenkins: state.extra as JenkinsModel?),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'mr',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          JenkinsConfig(jenkins: state.extra as JenkinsModel?),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
         GoRoute(
@@ -118,7 +137,7 @@ final GoRouter _router = GoRouter(
         ),
         GoRoute(
           path: '/codeup_config',
-          builder: (BuildContext context, GoRouterState state) => CodeUpConfig(jenkins: state.extra as JenkinsModel?),
+          builder: (BuildContext context, GoRouterState state) => CodeUpConfig(codeUp: state.extra as CodeUpModel?),
         ),
       ],
     ),
@@ -134,6 +153,8 @@ void main() {
         ChangeNotifierProvider(create: (context) => JenkinsJobProvider()),
         ChangeNotifierProvider(create: (context) => JenkinsProjectProvider()),
         ChangeNotifierProvider(create: (context) => LoadingProvider()),
+
+        ChangeNotifierProvider(create: (context) => CodeUpProvider()),
       ],
       child: const MyApp(),
     ),

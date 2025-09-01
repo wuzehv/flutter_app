@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/global.dart';
+import 'package:jenkins_app/common/jenkins_global.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/common/loading.dart';

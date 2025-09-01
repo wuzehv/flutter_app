@@ -8,9 +8,10 @@ import 'package:flutter_app_update/flutter_app_update.dart';
 import 'package:flutter_app_update/result_model.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jenkins_app/common/home_bottom.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
-import 'package:jenkins_app/screens/jenkins_item.dart';
+import 'package:jenkins_app/screens/jenkins/jenkins_item.dart';
 import 'package:jenkins_app/screens/left_drawer.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -148,7 +149,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Jenkins App"),
+        title: Text("Jenkins列表"),
         leading: Builder(
           builder: (context) {
             return IconButton(
@@ -163,12 +164,12 @@ class _HomeState extends State<Home> {
       drawer: LeftDrawer(),
       floatingActionButton: FloatingActionButton(
         heroTag: 'add',
-        // onPressed: () => context.push('/jenkins_config'),
-        onPressed: () => context.push('/codeup_config'),
+        onPressed: () => context.push('/jenkins_config'),
         tooltip: '添加配置',
         shape: CircleBorder(),
         child: const Icon(Icons.add),
       ),
+      bottomNavigationBar: HomeBottom(pageIdx: 0),
       body: Consumer<JenkinsProvider>(
         builder: (context, provider, child) {
           return provider.items.isEmpty

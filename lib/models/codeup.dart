@@ -3,13 +3,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
-import 'package:provider/provider.dart';
-
-import '../common/loading.dart';
 
 class CodeUpModel {
   final String url = 'https://openapi-rdc.aliyuncs.com/oapi/v1/codeup/organizations';
@@ -104,5 +99,40 @@ class CodeUpModel {
     }
 
     return {'list': []};
+  }
+}
+
+class CodeUpProvider extends ChangeNotifier {
+  List<dynamic> _items = [];
+
+  List<dynamic> get items => _items;
+
+  late ObjectStore<CodeUpModel> _store;
+
+  void save(CodeUpModel item) {
+    _setShared();
+    _store.save(item.orgId, item);
+
+    list();
+  }
+
+  void remove(String id) {
+    _setShared();
+    _store.remove(id);
+    list();
+  }
+
+  Future<void> list() async {
+    _setShared();
+    _items = await _store.list();
+    notifyListeners();
+  }
+
+  void _setShared() {
+    _store = ObjectStore<CodeUpModel>(
+      key: 'codeup_map',
+      fromJson: (json) => CodeUpModel.fromJson(json),
+      toJson: (obj) => obj.toJson(),
+    );
   }
 }

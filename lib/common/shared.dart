@@ -1,33 +1,42 @@
 import 'dart:convert';
-import 'package:jenkins_app/models/jenkins.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class JenkinsStore {
-  static const String _key = 'jenkins_map';
+typedef FromJson<T> = T Function(Map<String, dynamic> json);
+typedef ToJson<T> = Map<String, dynamic> Function(T object);
 
-  static Future<void> add(String id, JenkinsModel jenkins) async {
+class ObjectStore<T> {
+  final String key;
+  final FromJson<T> fromJson;
+  final ToJson<T> toJson;
+
+  ObjectStore({required this.key, required this.fromJson, required this.toJson});
+
+  Future<void> save(String id, T obj) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final String? jsonString = prefs.getString(_key);
+    final String? jsonString = prefs.getString(key);
     Map<String, dynamic> data = jsonString != null ? json.decode(jsonString) : {};
-    data[id] = jenkins;
-    await prefs.setString(_key, json.encode(data));
+
+    data[id] = toJson(obj);
+
+    await prefs.setString(key, json.encode(data));
   }
 
-  static Future<List<dynamic>> list() async {
+  Future<List<T>> list() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? jsonString = prefs.getString(_key);
-    final m = jsonString != null ? json.decode(jsonString) : {};
-    return m.values.map((e) => JenkinsModel.fromJson(e)).toList();
+    final String? jsonString = prefs.getString(key);
+    final Map<String, dynamic> m = jsonString != null ? json.decode(jsonString) : {};
+
+    return m.values.map<T>((e) => fromJson(Map<String, dynamic>.from(e))).toList();
   }
 
-  static Future<void> remove(String id) async {
+  Future<void> remove(String id) async {
     final prefs = await SharedPreferences.getInstance();
-    final String? jsonString = prefs.getString(_key);
+    final String? jsonString = prefs.getString(key);
     if (jsonString != null) {
       final Map<String, dynamic> data = json.decode(jsonString);
       data.remove(id);
-      await prefs.setString(_key, json.encode(data));
+      await prefs.setString(key, json.encode(data));
     }
   }
 }

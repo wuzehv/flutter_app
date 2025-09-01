@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/global.dart';
+import 'package:jenkins_app/common/jenkins_global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:provider/provider.dart';
@@ -186,25 +186,34 @@ class JenkinsProvider extends ChangeNotifier {
 
   List<dynamic> get items => _items;
 
-  void add(JenkinsModel item) {
-    if (item.id == null) {
-      item.id = getRandomString(10);
-    } else {
-      JenkinsStore.remove(item.id!);
-    }
-    JenkinsStore.add(item.id!, item);
+  late ObjectStore<JenkinsModel> _store;
+
+  void save(JenkinsModel item) {
+    _setShared();
+    item.id ??= getRandomString(10);
+    _store.save(item.id!, item);
 
     list();
   }
 
   void remove(String id) {
-    JenkinsStore.remove(id);
+    _setShared();
+    _store.remove(id);
     list();
   }
 
   Future<void> list() async {
-    _items = await JenkinsStore.list();
+    _setShared();
+    _items = await _store.list();
     notifyListeners();
+  }
+
+  void _setShared() {
+    _store = ObjectStore<JenkinsModel>(
+      key: 'jenkins_map',
+      fromJson: (json) => JenkinsModel.fromJson(json),
+      toJson: (obj) => obj.toJson(),
+    );
   }
 }
 
