@@ -8,6 +8,7 @@ import 'package:jenkins_app/models/jenkins_wms_be.dart';
 import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 import 'package:jenkins_app/common/loading.dart';
 import 'package:jenkins_app/screens/codeup/codeup.dart';
+import 'package:jenkins_app/screens/codeup/codeup_mr.dart';
 import 'package:jenkins_app/screens/codeup/codeup_project.dart';
 import 'package:jenkins_app/screens/jenkins/project_screens/shipla_build.dart';
 import 'package:jenkins_app/screens/jenkins/project_screens/wms_be_build.dart';
@@ -123,8 +124,7 @@ final GoRouter _router = GoRouter(
                   routes: <RouteBase>[
                     GoRoute(
                       path: 'mr',
-                      builder: (BuildContext context, GoRouterState state) =>
-                          JenkinsConfig(jenkins: state.extra as JenkinsModel?),
+                      builder: (BuildContext context, GoRouterState state) => CodeUpMr(codeup: state.extra as CodeUpModel),
                     ),
                   ],
                 ),

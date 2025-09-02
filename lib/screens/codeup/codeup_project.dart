@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/models/codeup.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:provider/provider.dart';
+
+import '../../common/util.dart';
 
 class CodeUpProject extends StatefulWidget {
   final CodeUpModel codeup;
@@ -58,7 +61,7 @@ class _CodeUpProjectState extends State<CodeUpProject> {
         onRefresh: () async => _loadData(true),
         child: ListView.separated(
           controller: _scrollController,
-          itemCount: _items.length + 1, // +1 用于加载更多的提示
+          itemCount: _items.length + 1,
           itemBuilder: (context, index) {
             if (index < _items.length) {
               return ListTile(
@@ -73,8 +76,15 @@ class _CodeUpProjectState extends State<CodeUpProject> {
                   (_items[index]['desc'] == null ? '' : _items[index]['desc'] + ' · ') + "更新于 ${_items[index]['update']}",
                 ),
                 trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () {
-                  print(_items[index]['id']);
+                onTap: () async {
+                  widget.codeup.curProjectName = _items[index]['name'];
+                  widget.codeup.curProjectId = _items[index]['id'];
+                  try {
+                    await widget.codeup.getProjectMrList(_items[index]['id'], 'merged');
+                    context.push('/codeup/project/mr', extra: widget.codeup);
+                  } catch (e) {
+                    showError('请求失败，请检查网络和配置信息');
+                  }
                 },
               );
             } else {

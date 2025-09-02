@@ -13,6 +13,9 @@ class CodeUpModel {
   final String remark;
 
   late List<Map<String, dynamic>> projectList;
+  late List<Map<String, dynamic>> projectMrList;
+  late String curProjectName;
+  late int curProjectId;
 
   Dio? _dio;
 
@@ -63,12 +66,23 @@ class CodeUpModel {
     return projectList;
   }
 
-  Future<List<String>> getProjectMrList(int projectId, String status, int page) async {
-    page = page <= 0 ? 1 : page;
-    final response = await _getDio().post(
-      '$url/$orgId/changeRequests?projectIds=$projectId?orderBy=updated_at&state=$status&perPage=10&sort=desc&page=$page',
+  Future<List<Map<String, dynamic>>> getProjectMrList(int projectId, String status) async {
+    final response = await _getDio().get(
+      '$url/$orgId/changeRequests?projectIds=$projectId?orderBy=updated_at&state=$status&perPage=10&sort=desc&page=1',
     );
-    return List<String>.from(response.data['jobs'].map((e) => e['name']));
+    projectMrList = List<Map<String, dynamic>>.from(
+      response.data.map(
+        (e) => {
+          'id': e['localId'],
+          'source': e['sourceBranch'],
+          'target': e['targetBranch'],
+          'author': e['author']['name'],
+          'created': formatChatTime(e['createdAt']),
+          'title': e['title'],
+        },
+      ),
+    );
+    return projectMrList;
   }
 
   Future<void> auditBuild(String opUrl) async {

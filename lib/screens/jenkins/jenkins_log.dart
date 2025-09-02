@@ -75,6 +75,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
               SizedBox(width: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                label: Icon(Icons.check, color: Colors.white),
                 onPressed: () async {
                   await showDialog(
                     context: context,
@@ -95,7 +96,6 @@ class _JenkinsLogState extends State<JenkinsLog> {
                     },
                   );
                 },
-                label: Icon(Icons.check, color: Colors.white),
               ),
             ],
           ),
