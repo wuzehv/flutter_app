@@ -46,19 +46,21 @@ class CodeUpModel {
     return dio;
   }
 
-  Future<void> getProjectList(int page) async {
+  Future<List<Map<String, dynamic>>> getProjectList(int page) async {
     page = page <= 0 ? 1 : page;
     final response = await _getDio().get('$url/$orgId/repositories?orderBy=last_activity_at&perPage=10&sort=desc&page=$page');
     projectList = List<Map<String, dynamic>>.from(
       response.data.map(
         (e) => {
           'id': e['id'],
-          'name': removeFirstSegment(e['pathWithNamespace']),
+          'name': e['name'],
+          'path': removeFirstSegment(e['pathWithNamespace']).replaceFirst('/${e['name']}', ''),
           'update': formatChatTime(e['lastActivityAt']),
           'desc': e['description'],
         },
       ),
     );
+    return projectList;
   }
 
   Future<List<String>> getProjectMrList(int projectId, String status, int page) async {

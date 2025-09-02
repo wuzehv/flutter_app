@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:jenkins_app/common/loading_icon.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/common/loading.dart';
@@ -130,10 +129,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
         children: [
           SizedBox(
             height: 5,
-            child: LinearProgressIndicator(
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation(Colors.blue),
-            ),
+            child: LinearProgressIndicator(backgroundColor: Colors.grey[200], valueColor: AlwaysStoppedAnimation(Colors.blue)),
           ),
           ..._logList.map<Widget>((project) {
             late Widget i;
@@ -142,7 +138,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
             } else if (project['result'] == 'FAILURE') {
               i = Icon(Icons.cancel, color: Colors.black54);
             } else {
-              i = LoadingIcon();
+              i = SizedBox(height: 17, width: 17, child: CircularProgressIndicator(color: Colors.blue));
             }
 
             return ExpansionTile(
