@@ -5,6 +5,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:provider/provider.dart';
+
+import '../common/loading.dart';
+
+const mrStatusOpened = 'opened';
+const mrStatusMerged = 'merged';
+const mrStatusClosed = 'closed';
 
 class CodeUpModel {
   final String url = 'https://openapi-rdc.aliyuncs.com/oapi/v1/codeup/organizations';
@@ -49,83 +56,99 @@ class CodeUpModel {
     return dio;
   }
 
-  Future<List<Map<String, dynamic>>> getProjectList(int page) async {
-    page = page <= 0 ? 1 : page;
-    final response = await _getDio().get('$url/$orgId/repositories?orderBy=last_activity_at&perPage=10&sort=desc&page=$page');
-    projectList = List<Map<String, dynamic>>.from(
-      response.data.map(
-        (e) => {
-          'id': e['id'],
-          'name': e['name'],
-          'path': removeFirstSegment(e['pathWithNamespace']).replaceFirst('/${e['name']}', ''),
-          'update': formatChatTime(e['lastActivityAt']),
-          'desc': e['description'],
-        },
-      ),
-    );
-    return projectList;
-  }
-
-  Future<List<Map<String, dynamic>>> getProjectMrList(int projectId, String status) async {
-    final response = await _getDio().get(
-      '$url/$orgId/changeRequests?projectIds=$projectId?orderBy=updated_at&state=$status&perPage=10&sort=desc&page=1',
-    );
-    projectMrList = List<Map<String, dynamic>>.from(
-      response.data.map(
-        (e) => {
-          'id': e['localId'],
-          'source': e['sourceBranch'],
-          'target': e['targetBranch'],
-          'author': e['author']['name'],
-          'created': formatChatTime(e['createdAt']),
-          'title': e['title'],
-        },
-      ),
-    );
-    return projectMrList;
-  }
-
-  Future<void> auditBuild(String opUrl) async {
-    final jsonString = jsonEncode({"parameter": []});
-
+  Future<List<Map<String, dynamic>>> getProjectList(BuildContext context, int page) async {
+    final loader = context.read<LoadingProvider>();
+    loader.show();
     try {
-      await _getDio().post('$url$opUrl', data: FormData.fromMap({'json': jsonString}));
-      showSucc('操作成功');
+      page = page <= 0 ? 1 : page;
+      final response = await _getDio().get('$url/$orgId/repositories?orderBy=last_activity_at&perPage=10&sort=desc&page=$page');
+      projectList = List<Map<String, dynamic>>.from(
+        response.data.map(
+          (e) => {
+            'id': e['id'],
+            'name': e['name'],
+            'path': removeFirstSegment(e['pathWithNamespace']).replaceFirst('/${e['name']}', ''),
+            'update': formatChatTime(e['lastActivityAt']),
+            'desc': e['description'],
+          },
+        ),
+      );
+      return projectList;
     } catch (e) {
-      showError('操作失败，请检查任务');
+      showError('请求失败，请检查网络和配置信息');
+      rethrow;
+    } finally {
+      loader.hide();
     }
   }
 
-  Future<Map<String, dynamic>> getBuildDetail(String name, String id) async {
+  Future<List<Map<String, dynamic>>> getProjectMrList(BuildContext context, int projectId, String status) async {
+    final loader = context.read<LoadingProvider>();
+    loader.show();
+    try {
+      final response = await _getDio().get(
+        '$url/$orgId/changeRequests?projectIds=$projectId&orderBy=updated_at&state=$status&perPage=10&sort=desc&page=1',
+      );
+      projectMrList = List<Map<String, dynamic>>.from(
+        response.data.map(
+          (e) => {
+            'id': e['localId'],
+            'source': e['sourceBranch'],
+            'target': e['targetBranch'],
+            'author': e['author']['name'],
+            'created': formatChatTime(e['createdAt']),
+            'title': e['title'],
+            'state': e['state'],
+          },
+        ),
+      );
+      return projectMrList;
+    } catch (e) {
+      showError('请求失败，请检查网络和配置信息');
+      rethrow;
+    } finally {
+      loader.hide();
+    }
+  }
+
+  Future<void> okMr(BuildContext context, int projectId, int localId) async {
+    final jsonString = jsonEncode({"mergeMessage": "", "mergeType": "no-fast-forward", "removeSourceBranch": false});
+    final loader = context.read<LoadingProvider>();
+    loader.show();
     try {
       final response = await _getDio().post(
-        '$url/job/$name/$id/api/json?tree=actions[parameters[name,value],causes[userName]],result',
+        '$url/$orgId/repositories/$projectId/changeRequests/$localId/merge',
+        data: jsonString,
       );
-
-      // 兼容参数和审核人顺序相反情况，目前只有shipla存在
-      var idx = response.data['actions'][0]['causes'] == null ? [0, 1] : [1, 0];
-
-      List<dynamic> res = response.data['actions'][idx[0]]['parameters']
-          .map((param) => '${param['name']}: ${param['value']}')
-          .toList();
-      res.add('提交人: ${response.data['actions'][idx[1]]['causes'][0]['userName']}');
-
-      // 获取当前任务是否需要审核
-      Map<String, dynamic> m = {'list': res, 'id': id};
-      if (response.data['result'] == null) {
-        final response2 = await _getDio().post('$url/job/$name/$id/wfapi/pendingInputActions/api/json');
-        if (response2.data is List && response2.data.length >= 1) {
-          m['proceedUrl'] = response2.data[0]['proceedUrl'];
-          m['abortUrl'] = response2.data[0]['abortUrl'];
-        }
+      if (response.data['status'] == 'MERGED') {
+        showSucc('合并成功');
+      } else {
+        showError('合并失败，请检查状态');
       }
-
-      return m;
     } catch (e) {
-      showError('读取失败，请检查当前构建信息');
+      showError('请求失败，请检查网络和配置信息');
+      rethrow;
+    } finally {
+      loader.hide();
     }
+  }
 
-    return {'list': []};
+  Future<void> closeMr(BuildContext context, int projectId, int localId) async {
+    final loader = context.read<LoadingProvider>();
+    loader.show();
+    try {
+      final response = await _getDio().post('$url/$orgId/repositories/$projectId/changeRequests/$localId/close');
+      if (response.data['result']) {
+        showSucc('关闭成功');
+      } else {
+        showError('关闭失败，请检查状态');
+      }
+    } catch (e) {
+      showError('请求失败，请检查网络和配置信息');
+      rethrow;
+    } finally {
+      loader.hide();
+    }
   }
 }
 

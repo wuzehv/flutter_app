@@ -45,10 +45,7 @@ final GoRouter _router = GoRouter(
               selector: (_, p) => p.loading,
               builder: (_, loading, __) {
                 if (!loading) return SizedBox.shrink();
-                return Container(
-                  color: Colors.black54,
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return Center(child: CircularProgressIndicator(color: Colors.blue));
               },
             ),
           ],

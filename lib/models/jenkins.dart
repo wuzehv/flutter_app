@@ -154,7 +154,7 @@ class JenkinsModel {
         return {
           'id': project['id'].toString(),
           'title': title,
-          'time': DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString(),
+          'time': DateTime.fromMillisecondsSinceEpoch(project['timestamp'] + 8 * 3600000).toString(),
           'result': res,
         };
       }).toList();

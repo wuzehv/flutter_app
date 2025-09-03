@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/models/codeup.dart';
-import 'package:jenkins_app/models/jenkins.dart';
-import 'package:provider/provider.dart';
-
-import '../../common/util.dart';
 
 class CodeUpProject extends StatefulWidget {
   final CodeUpModel codeup;
@@ -34,7 +30,6 @@ class _CodeUpProjectState extends State<CodeUpProject> {
     });
   }
 
-  // 模拟加载更多数据
   Future<void> _loadData(bool init) async {
     if (init) {
       _items = [];
@@ -46,7 +41,7 @@ class _CodeUpProjectState extends State<CodeUpProject> {
     }
 
     _page++;
-    final pageItems = await widget.codeup.getProjectList(_page);
+    final pageItems = await widget.codeup.getProjectList(context, _page);
     setState(() {
       _items.addAll(pageItems);
       _isLoadingMore = false;
@@ -79,19 +74,14 @@ class _CodeUpProjectState extends State<CodeUpProject> {
                 onTap: () async {
                   widget.codeup.curProjectName = _items[index]['name'];
                   widget.codeup.curProjectId = _items[index]['id'];
-                  try {
-                    await widget.codeup.getProjectMrList(_items[index]['id'], 'merged');
-                    context.push('/codeup/project/mr', extra: widget.codeup);
-                  } catch (e) {
-                    showError('请求失败，请检查网络和配置信息');
-                  }
+                  context.push('/codeup/project/mr', extra: widget.codeup);
                 },
               );
             } else {
               // 加载更多提示
               return Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Center(child: _isLoadingMore ? CircularProgressIndicator() : Text("上滑加载更多")),
+                child: Center(child: _isLoadingMore ? null : Text("上滑加载更多")),
               );
             }
           },

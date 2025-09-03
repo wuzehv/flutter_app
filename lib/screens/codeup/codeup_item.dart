@@ -7,6 +7,8 @@ import 'package:jenkins_app/models/codeup.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:provider/provider.dart';
 
+import '../../common/loading.dart';
+
 class CodeUpItem extends StatefulWidget {
   final CodeUpModel codeup;
 
@@ -51,12 +53,12 @@ class _CodeUpItemState extends State<CodeUpItem> {
           style: TextStyle(color: Colors.grey, fontSize: 13.5),
         ),
         onTap: () async {
+          final loader = context.read<LoadingProvider>();
+          loader.show();
           try {
-            await widget.codeup.getProjectList(1);
+            await widget.codeup.getProjectList(context, 1);
             context.push('/codeup/project', extra: widget.codeup);
-          } catch (e) {
-            showError('请求失败，请检查网络和配置信息');
-          }
+          } catch (e) {}
         },
       ),
     );
