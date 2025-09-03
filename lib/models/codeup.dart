@@ -61,7 +61,7 @@ class CodeUpModel {
     loader.show();
     try {
       page = page <= 0 ? 1 : page;
-      final response = await _getDio().get('$url/$orgId/repositories?orderBy=last_activity_at&perPage=10&sort=desc&page=$page');
+      final response = await _getDio().get('$url/$orgId/repositories?orderBy=last_activity_at&perPage=15&sort=desc&page=$page');
       projectList = List<Map<String, dynamic>>.from(
         response.data.map(
           (e) => {

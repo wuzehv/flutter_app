@@ -152,7 +152,9 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                     },
                     separatorBuilder: (context, index) => Divider(height: .0),
                   )
-                : Center(child: Text('暂无数据')),
+                : ListView(
+                    children: [SizedBox(height: 300, child: Center(child: Text('暂无数据')))],
+                  ),
           );
         }).toList(),
       ),

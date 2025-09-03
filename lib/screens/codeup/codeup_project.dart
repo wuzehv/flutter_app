@@ -54,38 +54,47 @@ class _CodeUpProjectState extends State<CodeUpProject> {
       appBar: AppBar(title: Text(widget.codeup.remark)),
       body: RefreshIndicator(
         onRefresh: () async => _loadData(true),
-        child: ListView.separated(
-          controller: _scrollController,
-          itemCount: _items.length + 1,
-          itemBuilder: (context, index) {
-            if (index < _items.length) {
-              return ListTile(
-                leading: Icon(Icons.terminal),
-                title: Row(
-                  children: [
-                    Text(_items[index]['path'] + '/', style: TextStyle(color: Colors.grey)),
-                    Text(_items[index]['name'], style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                subtitle: Text(
-                  (_items[index]['desc'] == null ? '' : _items[index]['desc'] + ' · ') + "更新于 ${_items[index]['update']}",
-                ),
-                trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () async {
-                  widget.codeup.curProjectName = _items[index]['name'];
-                  widget.codeup.curProjectId = _items[index]['id'];
-                  context.push('/codeup/project/mr', extra: widget.codeup);
-                },
-              );
-            } else {
-              // 加载更多提示
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Center(child: _isLoadingMore ? null : Text("上滑加载更多")),
-              );
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (scrollNotification) {
+            if (!_isLoadingMore && scrollNotification.metrics.pixels >= scrollNotification.metrics.maxScrollExtent - 100) {
+              _loadData(false);
+              return true;
             }
+            return false;
           },
-          separatorBuilder: (context, index) => Divider(height: .0),
+          child: ListView.separated(
+            physics: AlwaysScrollableScrollPhysics(),
+            controller: _scrollController,
+            itemCount: _items.length + 1,
+            itemBuilder: (context, index) {
+              if (index < _items.length) {
+                return ListTile(
+                  leading: Icon(Icons.terminal),
+                  title: Row(
+                    children: [
+                      Text(_items[index]['path'] + '/', style: TextStyle(color: Colors.grey)),
+                      Text(_items[index]['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  subtitle: Text(
+                    (_items[index]['desc'] == null ? '' : _items[index]['desc'] + ' · ') + "更新于 ${_items[index]['update']}",
+                  ),
+                  trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () async {
+                    widget.codeup.curProjectName = _items[index]['name'];
+                    widget.codeup.curProjectId = _items[index]['id'];
+                    context.push('/codeup/project/mr', extra: widget.codeup);
+                  },
+                );
+              } else {
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(child: _isLoadingMore ? null : Text("上滑加载更多")),
+                );
+              }
+            },
+            separatorBuilder: (context, index) => Divider(height: .0),
+          ),
         ),
       ),
     );
