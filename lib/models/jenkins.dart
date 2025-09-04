@@ -154,7 +154,7 @@ class JenkinsModel {
         return {
           'id': project['id'].toString(),
           'title': title,
-          'time': DateTime.fromMillisecondsSinceEpoch(project['timestamp'] + 8 * 3600000).toString(),
+          'time': formatChatTime(DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString()),
           'result': res,
         };
       }).toList();
@@ -188,18 +188,17 @@ class JenkinsProvider extends ChangeNotifier {
 
   late ObjectStore<JenkinsModel> _store;
 
-  void save(JenkinsModel item) {
+  Future<void> save(JenkinsModel item) async {
     _setShared();
     item.id ??= getRandomString(10);
-    _store.save(item.id!, item);
-
-    list();
+    await _store.save(item.id!, item);
+    await list();
   }
 
-  void remove(String id) {
+  Future<void> remove(String id) async {
     _setShared();
-    _store.remove(id);
-    list();
+    await _store.remove(id);
+    await list();
   }
 
   Future<void> list() async {

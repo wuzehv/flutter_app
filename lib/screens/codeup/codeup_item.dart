@@ -34,8 +34,8 @@ class _CodeUpItemState extends State<CodeUpItem> {
             label: '修改',
           ),
           SlidableAction(
-            onPressed: (_) {
-              context.read<CodeUpProvider>().remove(widget.codeup.orgId);
+            onPressed: (_) async {
+              await context.read<CodeUpProvider>().remove(widget.codeup.orgId);
               context.go('/codeup');
             },
             backgroundColor: Colors.red,

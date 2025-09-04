@@ -41,7 +41,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _loadList() async {
-    context.read<JenkinsProvider>().list();
+    await context.read<JenkinsProvider>().list();
   }
 
   void _initUpdateListener() {

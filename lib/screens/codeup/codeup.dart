@@ -23,7 +23,7 @@ class _CodeUpState extends State<CodeUp> {
   }
 
   Future<void> _loadList() async {
-    context.read<CodeUpProvider>().list();
+    await context.read<CodeUpProvider>().list();
   }
 
   @override

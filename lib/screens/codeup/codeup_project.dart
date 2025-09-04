@@ -81,8 +81,9 @@ class _CodeUpProjectState extends State<CodeUpProject> {
                   ),
                   trailing: Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
-                    widget.codeup.curProjectName = _items[index]['name'];
-                    widget.codeup.curProjectId = _items[index]['id'];
+                    widget.codeup
+                      ..curProjectName = _items[index]['name']
+                      ..curProjectId = _items[index]['id'];
                     context.push('/codeup/project/mr', extra: widget.codeup);
                   },
                 );

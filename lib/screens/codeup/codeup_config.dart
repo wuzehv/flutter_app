@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/models/codeup.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CodeUpConfig extends StatefulWidget {
   final CodeUpModel? codeUp;
@@ -19,18 +18,6 @@ class _CodeUpConfigState extends State<CodeUpConfig> {
   final TextEditingController _remarkController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
   final GlobalKey _formKey = GlobalKey<FormState>();
-
-  late SharedPreferences prefs;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPrefs();
-  }
-
-  Future<void> _loadPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,14 +64,14 @@ class _CodeUpConfigState extends State<CodeUpConfig> {
                   Expanded(
                     child: ElevatedButton(
                       child: Padding(padding: const EdgeInsets.all(20.0), child: Text("保存")),
-                      onPressed: () {
+                      onPressed: () async {
                         if ((_formKey.currentState as FormState).validate()) {
                           var j = CodeUpModel(
                             remark: _remarkController.text.trim(),
                             orgId: _orgController.text.trim(),
                             token: _tokenController.text.trim(),
                           );
-                          context.read<CodeUpProvider>().save(j);
+                          await context.read<CodeUpProvider>().save(j);
                           context.pop();
                         }
                       },

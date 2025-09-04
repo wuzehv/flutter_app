@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class JenkinsConfig extends StatefulWidget {
   final JenkinsModel? jenkins;
@@ -22,18 +21,6 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
   final TextEditingController _tokenController = TextEditingController();
   String? _id;
   final GlobalKey _formKey = GlobalKey<FormState>();
-
-  late SharedPreferences prefs;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPrefs();
-  }
-
-  Future<void> _loadPrefs() async {
-    prefs = await SharedPreferences.getInstance();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +72,7 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
                   Expanded(
                     child: ElevatedButton(
                       child: Padding(padding: const EdgeInsets.all(20.0), child: Text("保存")),
-                      onPressed: () {
+                      onPressed: () async {
                         if ((_formKey.currentState as FormState).validate()) {
                           var j = JenkinsModel(
                             remark: _remarkController.text.trim(),
@@ -94,7 +81,7 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
                             token: _tokenController.text.trim(),
                             id: _id,
                           );
-                          context.read<JenkinsProvider>().save(j);
+                          await context.read<JenkinsProvider>().save(j);
                           context.pop();
                         }
                       },

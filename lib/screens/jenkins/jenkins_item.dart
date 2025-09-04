@@ -31,8 +31,8 @@ class _JenkinsItemState extends State<JenkinsItem> {
             label: '修改',
           ),
           SlidableAction(
-            onPressed: (_) {
-              context.read<JenkinsProvider>().remove(widget.jenkins.id!);
+            onPressed: (_) async {
+              await context.read<JenkinsProvider>().remove(widget.jenkins.id!);
               context.go('/');
             },
             backgroundColor: Colors.red,

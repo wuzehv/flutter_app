@@ -159,17 +159,16 @@ class CodeUpProvider extends ChangeNotifier {
 
   late ObjectStore<CodeUpModel> _store;
 
-  void save(CodeUpModel item) {
+  Future<void> save(CodeUpModel item) async {
     _setShared();
-    _store.save(item.orgId, item);
-
-    list();
+    await _store.save(item.orgId, item);
+    await list();
   }
 
-  void remove(String id) {
+  Future<void> remove(String id) async {
     _setShared();
-    _store.remove(id);
-    list();
+    await _store.remove(id);
+    await list();
   }
 
   Future<void> list() async {
