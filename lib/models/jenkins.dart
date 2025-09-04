@@ -154,7 +154,7 @@ class JenkinsModel {
         return {
           'id': project['id'].toString(),
           'title': title,
-          'time': formatChatTime(DateTime.fromMillisecondsSinceEpoch(project['timestamp']).toString()),
+          'time': formatChatTime(DateTime.fromMillisecondsSinceEpoch(project['timestamp'], isUtc: true).toString()),
           'result': res,
         };
       }).toList();
