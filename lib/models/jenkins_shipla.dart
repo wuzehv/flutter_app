@@ -62,7 +62,14 @@ class JenkinsShipla extends JenkinsProjectModel {
       };
       switch (name) {
         case shiplaCt:
-          paramsM['customers'] = {'shipla': false, 'redwood': false, 'wise': false, 'nateethong': false, 'sciid': false};
+          paramsM['customers'] = {
+            'shipla': false,
+            'redwood': false,
+            'wise': false,
+            'nateethong': false,
+            'sciid': false,
+            'sathaporn': false,
+          };
           break;
         case shiplaGo:
           paramsM['projects'] = {
