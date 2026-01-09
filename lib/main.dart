@@ -10,6 +10,7 @@ import 'package:jenkins_app/common/loading.dart';
 import 'package:jenkins_app/screens/codeup/codeup.dart';
 import 'package:jenkins_app/screens/codeup/codeup_mr.dart';
 import 'package:jenkins_app/screens/codeup/codeup_project.dart';
+import 'package:jenkins_app/screens/jenkins/project_screens/ffm_build.dart';
 import 'package:jenkins_app/screens/jenkins/project_screens/shipla_build.dart';
 import 'package:jenkins_app/screens/jenkins/project_screens/wms_be_build.dart';
 import 'package:jenkins_app/screens/jenkins/project_screens/wms_fe_build.dart';
@@ -101,6 +102,17 @@ final GoRouter _router = GoRouter(
                       builder: (BuildContext context, GoRouterState state) {
                         final extra = state.extra as Map<String, dynamic>;
                         return ShiplaBuild(
+                          jenkins: extra['obj'] as JenkinsShipla,
+                          params: extra['params'],
+                          approver: extra['approver'],
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'ffm_build',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return FfmBuild(
                           jenkins: extra['obj'] as JenkinsShipla,
                           params: extra['params'],
                           approver: extra['approver'],

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:jenkins_app/models/jenkins.dart';
+import 'package:jenkins_app/models/jenkins_ffm.dart';
 import 'package:jenkins_app/models/jenkins_shipla.dart';
 import 'package:jenkins_app/models/jenkins_wms_be.dart';
 import 'package:jenkins_app/models/jenkins_wms_fe.dart';
@@ -7,6 +8,10 @@ import 'package:jenkins_app/models/jenkins_wms_fe.dart';
 const wmsNewApiPhp = 'wms_new_api-php';
 const wmsScmApiPhp = 'wms_scm_api-php';
 const wmsBossApi = 'wms_boss_api';
+
+const ffmCt = 'ffm-ct';
+const ffmGo = 'ffm-go';
+const ffmWeb = 'ffm-web';
 
 const wmsUi = 'wms-ui';
 const wmsBossUi = 'wms_boss_ui';
@@ -18,6 +23,10 @@ const shiplaWeb = 'shipla-web';
 JenkinsProjectModel getInstance(BuildContext context, JenkinsModel jenkins, String name) {
   if ([wmsNewApiPhp, wmsScmApiPhp, wmsBossApi].contains(name)) {
     return JenkinsWmsBe(context, jenkins, name: name);
+  }
+
+  if ([ffmCt, ffmGo, ffmWeb].contains(name)) {
+    return JenkinsFfm(context, jenkins, name: name);
   }
 
   if ([wmsUi, wmsBossUi].contains(name)) {
