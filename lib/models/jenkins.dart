@@ -45,15 +45,20 @@ class JenkinsModel {
 
     String basicAuth = 'Basic ${base64Encode(utf8.encode('$user:$token'))}';
     dio.options.headers['Authorization'] = basicAuth;
-    dio.options.headers['Content-Type'] = Headers.formUrlEncodedContentType;
+    dio.options.headers['Content-Type'] = Headers.jsonContentType;
 
     _dio = dio;
     return dio;
   }
 
   Future<List<String>> getJobList() async {
-    final response = await _getDio().post('$url/api/json?tree=views[name]');
-    return List<String>.from(response.data['views'].where((e) => e['_class'] != 'hudson.model.AllView').map((e) => e['name']));
+    final response = await _getDio().get('http://192.168.110.144:8989/open/projects');
+    return List<String>.from(response.data['data']['data'].map((e) => e['name']));
+  }
+
+  Future<List<Map<String, dynamic>>> getPendingList() async {
+    final response = await _getDio().get('http://192.168.110.144:8989/open/pending?user=$user');
+    return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<String>> getProjectList(String job) async {
@@ -235,12 +240,47 @@ class JenkinsJobModel {
 
 class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobProvider> {
   List<JenkinsJobModel> jobs = [];
+  List<Map<String, dynamic>> pendingList = [];
+
+  final Map<String, bool> _expanded = {};
+  int _pendingApprovalCount = 0;
+
+  bool isExpanded(String jobName) => _expanded[jobName] ?? false;
+
+  int get pendingApprovalCount => _pendingApprovalCount;
+
+  set pendingApprovalCount(int count) {
+    _pendingApprovalCount = count;
+    notifyListeners();
+  }
+
+  List<Map<String, dynamic>> get getPendingList => pendingList;
+
+  void toggleExpanded(String jobName) {
+    _expanded[jobName] = !(_expanded[jobName] ?? false);
+    notifyListeners();
+  }
 
   Future<void> fetchJobs() async {
     if (_currentJenkins == null) return;
     final response = await _currentJenkins?.getJobList();
     jobs = response!.map((x) => JenkinsJobModel(name: x)).toList();
     notifyListeners();
+  }
+
+  Future<void> fetchPendingApproval() async {
+    if (_currentJenkins == null) return;
+    try {
+      final response = await _currentJenkins?.getPendingList();
+      pendingList = response!;
+      pendingApprovalCount = response.length;
+      notifyListeners();
+    } catch (e) {
+      pendingList = [];
+      pendingApprovalCount = 0;
+      notifyListeners();
+      rethrow;
+    }
   }
 }
 
