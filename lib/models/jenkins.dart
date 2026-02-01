@@ -282,6 +282,99 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
       rethrow;
     }
   }
+
+  // 通用的审核方法，接收user, token, id作为参数
+  Future<bool> executeAuditAction(String user, String token, String id, {bool approve = true}) async {
+    if (_currentJenkins == null) return false;
+    
+    try {
+      // 构造认证头
+      String basicAuth = 'Basic ${base64Encode(utf8.encode('$user:$token'))}';
+      
+      // 创建临时Dio实例用于此操作
+      Dio tempDio = Dio();
+      tempDio.options.headers['Authorization'] = basicAuth;
+      tempDio.options.headers['Content-Type'] = Headers.jsonContentType;
+      
+      // 根据操作类型构建URL
+      String apiUrl = '${_currentJenkins!.url}$id';
+      final response = await tempDio.post(apiUrl);
+      
+      return response.statusCode == 200;
+    } catch (e) {
+      print('审核操作失败: $e');
+      return false;
+    }
+  }
+
+  Future<void> approveAllPending() async {
+    if (_currentJenkins == null) return;
+    
+    // 遍历所有待审核项，逐一调用审核接口
+    List<Map<String, dynamic>> successfulApprovals = [];
+    for (var item in pendingList) {
+      bool success = await executeAuditAction(
+        _currentJenkins!.user,
+        _currentJenkins!.token,
+        item['op_url']!,
+        approve: true,
+      );
+      
+      if (success) {
+        // 如果接口调用成功，标记为成功
+        successfulApprovals.add(item);
+      }
+    }
+    
+    // 从pendingList中移除已成功审核的项目
+    for (var item in successfulApprovals) {
+      pendingList.remove(item);
+    }
+    
+    // 更新待审核计数
+    pendingApprovalCount = pendingList.length;
+    
+    // 通知UI更新
+    notifyListeners();
+  }
+
+  Future<void> approveSingleItem(Map<String, dynamic> item) async {
+    if (_currentJenkins == null) return;
+    
+    bool success = await executeAuditAction(
+      _currentJenkins!.user,
+      _currentJenkins!.token,
+      item['op_url']!,
+      approve: true,
+    );
+    
+    if (success) {
+      // 如果接口调用成功，从pendingList中移除该项目
+      pendingList.remove(item);
+      pendingApprovalCount = pendingList.length;
+      notifyListeners();
+    }
+  }
+
+  Future<void> rejectSingleItem(Map<String, dynamic> item) async {
+    if (_currentJenkins == null) return;
+    
+    // 拒绝操作可能需要不同的URL
+    String rejectUrl = item['reject_url'] ?? item['op_url'];
+    bool success = await executeAuditAction(
+      _currentJenkins!.user,
+      _currentJenkins!.token,
+      rejectUrl,
+      approve: false,
+    );
+    
+    if (success) {
+      // 如果接口调用成功，从pendingList中移除该项目
+      pendingList.remove(item);
+      pendingApprovalCount = pendingList.length;
+      notifyListeners();
+    }
+  }
 }
 
 class JenkinsProjectModel {
