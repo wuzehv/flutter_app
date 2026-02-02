@@ -1,9 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:provider/provider.dart';
+import 'pending_approval_item.dart';
 
 class JenkinsJob extends StatefulWidget {
   final String name;
@@ -96,10 +96,6 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                             leading: Icon(Icons.play_arrow, color: Colors.green),
                             onTap: () async {
                               try {
-                                await context
-                                    .read<JenkinsProjectProvider>()
-                                    .setJenkins(provider.currentJenkins!)
-                                    .fetchProjects(job.name);
                                 context.push('/job/project', extra: job.name);
                               } catch (e) {
                                 showError('请求失败，请检查网络和配置信息');
@@ -110,8 +106,12 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                             title: Text('发布历史', style: TextStyle(color: Colors.orange)),
                             leading: Icon(Icons.history, color: Colors.orange),
                             onTap: () {
-                              // TODO: 实现发布历史功能
-                              showInfo('发布历史功能待实现');
+                              // 跳转到 jenkins_log 页面，并传递当前 job 的名称
+                              context.push('/job/log', extra: {
+                                'obj': provider.currentJenkins,
+                                'name': job.name,
+                                'jobs': List<String>.from(provider.projectList[index]['jobs'])
+                              });
                             },
                           ),
                         ],
@@ -199,115 +199,26 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                         itemCount: provider.getPendingList.length,
                         itemBuilder: (context, index) {
                           final item = provider.getPendingList[index];
-                          return Card(
-                            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            child: Theme(
-                              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                              child: ExpansionTile(
-                                tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                title: Row(
-                                  children: [
-                                    Text('【${item['country'] ?? ''}】 '),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue[50],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        (item['branch'] ?? '').toString().length > 25 
-                                          ? (item['branch'] ?? '').toString().substring(0, 25) + '...'
-                                          : item['branch'] ?? '',
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Text(
-                                  '${item['show_time'] ?? ''}',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                ),
-                                subtitle: Text('${item['real_project'] ?? '未知项目'} by ${item['creator'] ?? '未知提交者'}'),
-                                leading: Icon(Icons.pending_actions, color: Colors.orange),
-                                childrenPadding: EdgeInsets.all(0),
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(16),
-                                    margin: EdgeInsets.only(bottom: 8),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('构建参数:', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        SizedBox(height: 8),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: (item['build_params'] as List<dynamic>?)?.map((param) {
-                                            final p = param as Map<String, dynamic>;
-                                            return Padding(
-                                              padding: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-                                              child: Wrap(
-                                                alignment: WrapAlignment.start,
-                                                crossAxisAlignment: WrapCrossAlignment.start,
-                                                spacing: 8,
-                                                children: [
-                                                  Text('${p['name']}:', style: TextStyle(fontWeight: FontWeight.w500)),
-                                                  Container(
-                                                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.green[50],
-                                                      borderRadius: BorderRadius.circular(4),
-                                                    ),
-                                                    child: Text(p['value']?.toString() ?? '', softWrap: true,),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          }).toList() ?? [],
-                                        ),
-                                        SizedBox(height: 12),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: ElevatedButton.icon(
-                                                onPressed: () {
-                                                  // 调用审核拒绝接口
-                                                  try {
-                                                    context.read<JenkinsJobProvider>().rejectSingleItem(item);
-                                                    showInfo('已拒绝');
-                                                  } catch (e) {
-                                                    showError('拒绝失败');
-                                                  }
-                                                },
-                                                icon: Icon(Icons.close, color: Colors.white),
-                                                label: Text('拒绝', style: TextStyle(color: Colors.white)),
-                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                              ),
-                                            ),
-                                            SizedBox(width: 10),
-                                            Expanded(
-                                              child: ElevatedButton.icon(
-                                                onPressed: () {
-                                                  // 调用审核通过接口
-                                                  try {
-                                                    context.read<JenkinsJobProvider>().approveSingleItem(item);
-                                                    showInfo('已通过');
-                                                  } catch (e) {
-                                                    showError('通过失败');
-                                                  }
-                                                },
-                                                icon: Icon(Icons.check, color: Colors.white),
-                                                label: Text('通过', style: TextStyle(color: Colors.white)),
-                                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
+                          return PendingApprovalItem(
+                            item: item,
+                            onReject: () {
+                              // 调用审核拒绝接口
+                              try {
+                                context.read<JenkinsJobProvider>().rejectSingleItem(item);
+                                showInfo('已拒绝');
+                              } catch (e) {
+                                showError('拒绝失败');
+                              }
+                            },
+                            onApprove: () {
+                              // 调用审核通过接口
+                              try {
+                                context.read<JenkinsJobProvider>().approveSingleItem(item);
+                                showInfo('已通过');
+                              } catch (e) {
+                                showError('通过失败');
+                              }
+                            },
                           );
                         },
                       ),

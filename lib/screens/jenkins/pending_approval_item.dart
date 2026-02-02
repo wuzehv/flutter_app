@@ -1,116 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:provider/provider.dart';
 import 'package:jenkins_app/models/jenkins.dart';
-import 'pending_approval_item.dart';
-
-class JenkinsLog extends StatefulWidget {
-  final JenkinsModel jenkins;
-  final String name;
-  final List<String> searchOptions;
-
-  const JenkinsLog({super.key, required this.jenkins, required this.name, required this.searchOptions});
-
-  @override
-  State<StatefulWidget> createState() => _JenkinsLogState();
-}
-
-class _JenkinsLogState extends State<JenkinsLog> {
-  String _selectedFilter = ''; // 默认选择
-  List<Map<String, dynamic>> _logList = []; // 存储日志列表
-
-  @override
-  void initState() {
-    _selectedFilter = widget.searchOptions[0];
-    super.initState();
-
-    // 初始化时获取项目列表
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        await _loadLogs();
-      } catch (e) {
-        // 错误处理
-      }
-    });
-  }
-
-  Future<void> _loadLogs() async {
-    final logs = await widget.jenkins.getBuildList(_selectedFilter); // 使用_getSelectedFilter作为项目名称参数
-    setState(() {
-      _logList = logs.cast<Map<String, dynamic>>();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.name)),
-      body: Column(
-        children: [
-          // 下拉搜索选项
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Text('项目:', style: TextStyle(fontSize: 16)),
-                SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButton<String>(
-                    value: _selectedFilter,
-                    isExpanded: true,
-                    items: widget.searchOptions.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(option),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedFilter = newValue!;
-                        _loadLogs(); // 当筛选条件改变时，重新加载日志
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 发布历史列表
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                try {
-                  await _loadLogs();
-                } catch (e) {
-                  // 错误处理
-                }
-              },
-              child: ListView.builder(
-                itemCount: _logList.length,
-                itemBuilder: (context, index) {
-                  final item = _logList[index];
-                  return BuildHistoryItem(
-                    item: item,
-                    onViewLog: () {
-                      context.push('/job/log/detail', extra: {
-                        'obj': widget.jenkins,
-                        'name': widget.name,
-                        'logId': item['id'],
-                      });
-                    },
-                    onRebuild: () {
-                      showInfo('触发新构建');
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // 公共的待审核项目组件
 class PendingApprovalItem extends StatelessWidget {
@@ -210,6 +101,82 @@ class PendingApprovalItem extends StatelessWidget {
                           icon: Icon(Icons.check, color: Colors.white),
                           label: Text('通过', style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// 公共的构建历史项目组件
+class BuildHistoryItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final VoidCallback onViewLog;
+  final VoidCallback onRebuild;
+
+  const BuildHistoryItem({
+    Key? key,
+    required this.item,
+    required this.onViewLog,
+    required this.onRebuild,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    late Widget icon;
+    if (item['result'] == 'SUCCESS') {
+      icon = Icon(Icons.check_circle, color: Colors.green);
+    } else if (item['result'] == 'FAILURE') {
+      icon = Icon(Icons.cancel, color: Colors.red);
+    } else {
+      icon = SizedBox(height: 17, width: 17, child: CircularProgressIndicator(color: Colors.blue));
+    }
+
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: icon,
+          title: Text(item['title'] ?? 'Unknown Title', style: TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(item['time'] ?? 'Unknown Time', style: TextStyle(color: Colors.grey, fontSize: 13.5)),
+          childrenPadding: EdgeInsets.all(0),
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              margin: EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('构建详情:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  Text('ID: ${item['id']}'),
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: onRebuild,
+                          icon: Icon(Icons.play_arrow, color: Colors.white),
+                          label: Text('立即构建', style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: onViewLog,
+                          icon: Icon(Icons.description, color: Colors.white),
+                          label: Text('查看日志', style: TextStyle(color: Colors.white)),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                         ),
                       ),
                     ],

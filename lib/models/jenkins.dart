@@ -3,13 +3,9 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/jenkins_global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
-import 'package:provider/provider.dart';
-
-import '../common/loading.dart';
 
 class JenkinsModel {
   late String? id;
@@ -43,17 +39,17 @@ class JenkinsModel {
     }
     final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 3)));
 
-    String basicAuth = 'Basic ${base64Encode(utf8.encode('$user:$token'))}';
-    dio.options.headers['Authorization'] = basicAuth;
+    dio.options.headers['X-J-User'] = user;
+    dio.options.headers['X-J-Token'] = token;
     dio.options.headers['Content-Type'] = Headers.jsonContentType;
 
     _dio = dio;
     return dio;
   }
 
-  Future<List<String>> getJobList() async {
+  Future<List<Map<String, dynamic>>> getJobList() async {
     final response = await _getDio().get('http://192.168.110.144:8989/open/projects');
-    return List<String>.from(response.data['data']['data'].map((e) => e['name']));
+    return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getPendingList() async {
@@ -61,9 +57,9 @@ class JenkinsModel {
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
-  Future<List<String>> getProjectList(String job) async {
-    final response = await _getDio().post('$url/view/$job/api/json?tree=jobs[name]');
-    return List<String>.from(response.data['jobs'].map((e) => e['name']));
+  Future<List<Map<String, dynamic>>> getBuildList(String project) async {
+    final response = await _getDio().get('http://192.168.110.144:8989/open/builds?project=$project');
+    return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<void> auditBuild(String opUrl) async {
@@ -173,16 +169,16 @@ class JenkinsModel {
   }
 
   Future<void> toLogPage(BuildContext context, String name, [bool fromList = true]) async {
-    final loader = context.read<LoadingProvider>();
-    loader.show();
-    final logList = await getLogList(context, name);
-    loader.hide();
-    if (logList == null) {
-      return;
-    }
-    fromList
-        ? context.push('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList})
-        : context.pushReplacement('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList});
+    // final loader = context.read<LoadingProvider>();
+    // loader.show();
+    // final logList = await getLogList(context, name);
+    // loader.hide();
+    // if (logList == null) {
+    //   return;
+    // }
+    // fromList
+    //     ? context.push('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList})
+    //     : context.pushReplacement('/job/project/log', extra: {'obj': this, 'name': name, 'log_list': logList});
   }
 }
 
@@ -240,6 +236,7 @@ class JenkinsJobModel {
 
 class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobProvider> {
   List<JenkinsJobModel> jobs = [];
+  List<Map<String, dynamic>> projectList = [];
   List<Map<String, dynamic>> pendingList = [];
 
   final Map<String, bool> _expanded = {};
@@ -264,14 +261,24 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
   Future<void> fetchJobs() async {
     if (_currentJenkins == null) return;
     final response = await _currentJenkins?.getJobList();
-    jobs = response!.map((x) => JenkinsJobModel(name: x)).toList();
+    projectList = response!;
+    jobs = response.map((x) => JenkinsJobModel(name: x['name'])).toList();
     notifyListeners();
   }
 
-  Future<void> fetchPendingApproval() async {
-    if (_currentJenkins == null) return;
+  Future<List<Map<String, dynamic>>?> fetchPendingApproval() async {
     try {
       final response = await _currentJenkins?.getPendingList();
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> fetchBuildList(String project) async {
+    if (_currentJenkins == null) return;
+    try {
+      final response = await _currentJenkins?.getBuildList(project);
       pendingList = response!;
       pendingApprovalCount = response.length;
       notifyListeners();
@@ -403,13 +410,6 @@ class JenkinsProjectProvider extends ChangeNotifier with JenkinsSetter<JenkinsPr
   final Map<String, bool> _expanded = {};
 
   bool isExpanded(String projectName) => _expanded[projectName] ?? false;
-
-  Future<void> fetchProjects(String job) async {
-    if (_currentJenkins == null) return;
-    final response = await _currentJenkins?.getProjectList(job);
-    projects = response!.map((x) => JenkinsProjectModel(name: x)).toList();
-    notifyListeners();
-  }
 
   void toggleExpanded(String projectName) {
     _expanded[projectName] = !(_expanded[projectName] ?? false);
