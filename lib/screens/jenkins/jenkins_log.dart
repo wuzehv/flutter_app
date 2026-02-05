@@ -59,10 +59,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
                     value: _selectedFilter,
                     isExpanded: true,
                     items: widget.searchOptions.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(option),
-                      );
+                      return DropdownMenuItem<String>(value: option, child: Text(option));
                     }).toList(),
                     onChanged: (String? newValue) {
                       setState(() {
@@ -89,17 +86,25 @@ class _JenkinsLogState extends State<JenkinsLog> {
                 itemCount: _logList.length,
                 itemBuilder: (context, index) {
                   final item = _logList[index];
-                  return BuildHistoryItem(
+                  return PendingApprovalItem(
                     item: item,
-                    onViewLog: () {
-                      context.push('/job/log/detail', extra: {
-                        'obj': widget.jenkins,
-                        'name': widget.name,
-                        'logId': item['id'],
-                      });
+                    onReject: () {
+                      // 调用审核拒绝接口
+                      try {
+                        // context.read<JenkinsJobProvider>().rejectSingleItem(item);
+                        showInfo('已拒绝');
+                      } catch (e) {
+                        showError('拒绝失败');
+                      }
                     },
-                    onRebuild: () {
-                      showInfo('触发新构建');
+                    onApprove: () {
+                      // 调用审核通过接口
+                      try {
+                        // context.read<JenkinsJobProvider>().approveSingleItem(item);
+                        showInfo('已通过');
+                      } catch (e) {
+                        showError('通过失败');
+                      }
                     },
                   );
                 },
@@ -107,118 +112,6 @@ class _JenkinsLogState extends State<JenkinsLog> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// 公共的待审核项目组件
-class PendingApprovalItem extends StatelessWidget {
-  final Map<String, dynamic> item;
-  final VoidCallback onReject;
-  final VoidCallback onApprove;
-
-  const PendingApprovalItem({
-    Key? key,
-    required this.item,
-    required this.onReject,
-    required this.onApprove,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Row(
-            children: [
-              Text('【${item['country'] ?? ''}】 '),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  (item['branch'] ?? '').toString().length > 25 
-                    ? (item['branch'] ?? '').toString().substring(0, 25) + '...'
-                    : item['branch'] ?? '',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          trailing: Text(
-            '${item['show_time'] ?? ''}',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-          subtitle: Text('${item['real_project'] ?? '未知项目'} by ${item['creator'] ?? '未知提交者'}'),
-          leading: Icon(Icons.pending_actions, color: Colors.orange),
-          childrenPadding: EdgeInsets.all(0),
-          children: [
-            Container(
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('构建参数:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: (item['build_params'] as List<dynamic>?)?.map((param) {
-                      final p = param as Map<String, dynamic>;
-                      return Padding(
-                        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-                        child: Wrap(
-                          alignment: WrapAlignment.start,
-                          crossAxisAlignment: WrapCrossAlignment.start,
-                          spacing: 8,
-                          children: [
-                            Text('${p['name']}:', style: TextStyle(fontWeight: FontWeight.w500)),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.green[50],
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(p['value']?.toString() ?? '', softWrap: true,),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList() ?? [],
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onReject,
-                          icon: Icon(Icons.close, color: Colors.white),
-                          label: Text('拒绝', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onApprove,
-                          icon: Icon(Icons.check, color: Colors.white),
-                          label: Text('通过', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
       ),
     );
   }
