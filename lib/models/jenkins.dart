@@ -48,17 +48,17 @@ class JenkinsModel {
   }
 
   Future<List<Map<String, dynamic>>> getJobList() async {
-    final response = await _getDio().get('http://10.251.68.137:8989/open/projects');
+    final response = await _getDio().get('http://192.168.110.144:8989/open/projects');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getPendingList() async {
-    final response = await _getDio().get('http://10.251.68.137:8989/open/pending?user=$user');
+    final response = await _getDio().get('http://192.168.110.144:8989/open/pending?user=$user');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getBuildList(String project) async {
-    final response = await _getDio().get('http://10.251.68.137:8989/open/builds?project=$project');
+    final response = await _getDio().get('http://192.168.110.144:8989/open/builds?project=$project');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
@@ -382,6 +382,9 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
       notifyListeners();
     }
   }
+  
+  // 获取当前Jenkins实例的getter
+  JenkinsModel? get currentJenkins => _currentJenkins;
 }
 
 class JenkinsProjectModel {

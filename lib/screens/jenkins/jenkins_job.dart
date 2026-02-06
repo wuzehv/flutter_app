@@ -95,11 +95,10 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                             title: Text('开始发布', style: TextStyle(color: Colors.green)),
                             leading: Icon(Icons.play_arrow, color: Colors.green),
                             onTap: () async {
-                              try {
-                                context.push('/job/project', extra: job.name);
-                              } catch (e) {
-                                showError('请求失败，请检查网络和配置信息');
-                              }
+                              context.push('/job/build_wms', extra: {
+                                'obj': provider.currentJenkins,
+                                'name': job.name,
+                              });
                             },
                           ),
                           ListTile(

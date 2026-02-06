@@ -12,6 +12,7 @@ import 'package:jenkins_app/screens/home.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_job.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_log.dart';
+import 'package:jenkins_app/screens/jenkins/wms_publish_page.dart'; // 新增导入
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 
@@ -58,6 +59,13 @@ final GoRouter _router = GoRouter(
                   builder: (BuildContext context, GoRouterState state) {
                     final extra = state.extra as Map<String, dynamic>;
                     return JenkinsLog(jenkins: extra['obj'] as JenkinsModel, name: extra['name'], searchOptions: extra['jobs'],);
+                  },
+                ),
+                GoRoute(
+                  path: 'build_wms',
+                  builder: (BuildContext context, GoRouterState state) {
+                    final extra = state.extra as Map<String, dynamic>;
+                    return WmsPublishPage(projectName: extra['name'], jenkins: extra['obj'] as JenkinsModel);
                   },
                 ),
               ],

@@ -15,8 +15,7 @@ class JenkinsLog extends StatefulWidget {
   State<StatefulWidget> createState() => _JenkinsLogState();
 }
 
-class _JenkinsLogState extends State<JenkinsLog> {
-  String _selectedFilter = ''; // 默认选择
+class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = ''; // 默认选择
   List<Map<String, dynamic>> _logList = []; // 存储日志列表
 
   @override
