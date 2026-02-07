@@ -12,6 +12,7 @@ import 'package:jenkins_app/screens/home.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_job.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_log.dart';
+import 'package:jenkins_app/screens/jenkins/shipla_publish_page.dart'; // 新增导入
 import 'package:jenkins_app/screens/jenkins/wms_publish_page.dart'; // 新增导入
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -66,6 +67,14 @@ final GoRouter _router = GoRouter(
                   builder: (BuildContext context, GoRouterState state) {
                     final extra = state.extra as Map<String, dynamic>;
                     return WmsPublishPage(projectName: extra['name'], jenkins: extra['obj'] as JenkinsModel);
+                  },
+                ),
+                // 添加Shipla发布页面路由
+                GoRoute(
+                  path: 'build_shipla',
+                  builder: (BuildContext context, GoRouterState state) {
+                    final extra = state.extra as Map<String, dynamic>;
+                    return ShiplaPublishPage(projectName: extra['name'], jenkins: extra['obj'] as JenkinsModel);
                   },
                 ),
               ],

@@ -54,7 +54,7 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
               builder: (context, provider, child) {
                 return Tab(
                   text: provider.pendingApprovalCount > 0 
-                    ? '待你审核 (${provider.pendingApprovalCount})' 
+                    ? '待你审核 (${provider.pendingApprovalCount}) '
                     : '待你审核',
                   icon: Icon(
                     provider.pendingApprovalCount > 0 
@@ -95,7 +95,15 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                             title: Text('开始发布', style: TextStyle(color: Colors.green)),
                             leading: Icon(Icons.play_arrow, color: Colors.green),
                             onTap: () async {
-                              context.push('/job/build_wms', extra: {
+                              // 根据项目名称判断跳转到不同的发布页面
+                              String routePath;
+                              if (job.name.toLowerCase().contains('shipla')) {
+                                routePath = '/job/build_shipla';
+                              } else {
+                                routePath = '/job/build_wms';
+                              }
+                              
+                              context.push(routePath, extra: {
                                 'obj': provider.currentJenkins,
                                 'name': job.name,
                               });

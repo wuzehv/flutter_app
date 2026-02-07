@@ -121,4 +121,16 @@ class JenkinsWmsBe extends JenkinsProjectModel {
 
     return controller.stream;
   }
+
+  // 导航到WMS发布页面
+  void _toWmsPublishPage() {
+    // 根据项目名称判断使用哪个发布页面
+    if (name.toLowerCase().contains('shipla')) {
+      // Shipla项目使用Shipla发布页面
+      context.push('/shipla/publish', extra: {'jenkins': jenkins, 'projectName': name});
+    } else {
+      // 其他项目（包括WMS）使用WMS发布页面
+      context.push('/wms/publish', extra: {'jenkins': jenkins, 'projectName': name});
+    }
+  }
 }

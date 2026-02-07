@@ -4,23 +4,22 @@ import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/jenkins/widgets/choice_selector.dart';
 import 'package:provider/provider.dart';
 
-class WmsPublishPage extends StatefulWidget {
+class ShiplaPublishPage extends StatefulWidget {
   final JenkinsModel jenkins;
   final String projectName;
 
-  const WmsPublishPage({super.key, required this.jenkins, required this.projectName});
+  const ShiplaPublishPage({super.key, required this.jenkins, required this.projectName});
 
   @override
-  State<WmsPublishPage> createState() => _WmsPublishPageState();
+  State<ShiplaPublishPage> createState() => _ShiplaPublishPageState();
 }
 
-class _WmsPublishPageState extends State<WmsPublishPage> {
+class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _branchController = TextEditingController();
   final TextEditingController _ctBranchController = TextEditingController();
   
   // 对应Wms结构体的字段
-  List<String> _selectedCountries = [];
   List<String> _selectedOpTypes = [];
   List<String> _selectedProjects = [];
   String _env = 'pro'; // 环境默认选中pro
@@ -29,21 +28,10 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
   String _approver = '';
   
   // 可选项数据（这些通常会从后端获取）
-  List<String> _countries = ['CN', 'US', 'UK', 'JP', 'SG', 'ID']; // 添加SG和ID
   List<String> _opTypes = ['web', 'ct']; // 示例数据
   List<String> _projects = ['project_a', 'project_b', 'project_c']; // 示例数据
-  List<String> _envs = ['tra', 'pro']; // 环境选项
-  List<String> _approvers = []; // 审核人列表
-  
-  // 每个项目对应的审核人列表
-  Map<String, List<String>> _projectApprovers = {
-    'project_a': ['admin_a', 'manager_a', 'developer_a'],
-    'project_b': ['admin_a', 'manager_b', 'developer_b'],
-    'project_c': ['admin_a', 'manager_c', 'developer_c'],
-  };
-  
-  // SG和ID国家的特殊审核人
-  List<String> _specialCountryApprovers = ['admin_a', 'id_approver'];
+  List<String> _envs = ['pro']; // 环境选项（去掉tra）
+  List<String> _approvers = ['admin', 'manager', 'developer', 'super_admin', 'chief_approver']; // 所有审核人（去掉超级审核人逻辑）
 
   @override
   void initState() {
@@ -66,70 +54,14 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     // 这里应该从API获取审核人列表
     // 暂时使用示例数据
     setState(() {
-      // 计算符合条件的审核人
-      _calculateQualifiedApprovers();
+      // 所有审核人都有相同权限
+      _approvers = ['admin', 'manager', 'developer', 'super_admin', 'chief_approver'];
       
       // 设置默认审核人
       if (_approvers.isNotEmpty) {
         _approver = _approvers[0];
       }
     });
-  }
-  
-  // 计算符合条件的审核人
-  void _calculateQualifiedApprovers() {
-    if (_selectedProjects.isEmpty) {
-      _approvers = [];
-      return;
-    }
-    
-    Set<String> qualifiedApprovers = <String>{};
-    bool hasSpecialCountry = _selectedCountries.any((country) => 
-      country.toUpperCase() == 'SG' || country.toUpperCase() == 'ID');
-    
-    // 获取所有选中项目的审核人交集
-    Set<String> projectApproverIntersection = _getProjectApproverIntersection();
-    
-    if (hasSpecialCountry) {
-      // 特殊情况：包含SG/ID国家
-      // 审核人必须同时满足：
-      // 1. 在所有选中项目的审核人交集中
-      // 2. 在SG/ID特殊审核人列表中
-      Set<String> specialApprovers = Set.from(_specialCountryApprovers);
-      qualifiedApprovers = projectApproverIntersection.intersection(specialApprovers);
-    } else {
-      // 普通情况：只考虑项目审核人交集
-      qualifiedApprovers = projectApproverIntersection;
-    }
-    
-    // 转换为列表并排序
-    _approvers = qualifiedApprovers.toList()..sort();
-  }
-  
-  // 获取项目审核人交集
-  Set<String> _getProjectApproverIntersection() {
-    if (_selectedProjects.isEmpty) return <String>{};
-    
-    // 初始化为第一个项目的审核人列表
-    Set<String> intersection = <String>{};
-    String firstProject = _selectedProjects[0];
-    if (_projectApprovers.containsKey(firstProject)) {
-      intersection.addAll(_projectApprovers[firstProject]!);
-    }
-    
-    // 与其他项目的审核人列表求交集
-    for (int i = 1; i < _selectedProjects.length; i++) {
-      String project = _selectedProjects[i];
-      if (_projectApprovers.containsKey(project)) {
-        Set<String> projectApprovers = Set.from(_projectApprovers[project]!);
-        intersection = intersection.intersection(projectApprovers);
-      } else {
-        // 如果某个项目没有审核人列表，则交集为空
-        return <String>{};
-      }
-    }
-    
-    return intersection;
   }
 
   @override
@@ -146,32 +78,6 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 国家列表选择（增加全选功能）
-                ChoiceSelector(
-                  title: '国家列表',
-                  options: _countries,
-                  selectedValues: _selectedCountries,
-                  showSelectAll: true, // 启用全选功能
-                  onSelectionChanged: (country) {
-                    setState(() {
-                      if (_selectedCountries.contains(country)) {
-                        _selectedCountries.remove(country);
-                      } else {
-                        _selectedCountries.add(country);
-                      }
-                      // 国家选择变化时重新加载审核人
-                      _loadApprovers();
-                    });
-                  },
-                  onSelectAll: (selectedCountries) {
-                    setState(() {
-                      _selectedCountries = selectedCountries;
-                      // 全选变化时重新加载审核人
-                      _loadApprovers();
-                    });
-                  },
-                ),
-                SizedBox(height: 16),
 
                 // 操作类型选择
                 ChoiceSelector(
@@ -220,9 +126,7 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
                     setState(() {
                       _env = env;
                       // 根据环境智能填充PHP分支
-                      if (env == 'tra') {
-                        _branch = 'training';
-                      } else if (env == 'pro') {
+                      if (env == 'pro') {
                         _branch = 'master';
                       }
                       // 同时更新控制器
@@ -312,10 +216,6 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       // 验证必填字段
-      if (_selectedCountries.isEmpty) {
-        showError('请选择国家列表');
-        return;
-      }
       if (_selectedOpTypes.isEmpty) {
         showError('请选择操作类型');
         return;
@@ -348,9 +248,8 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
         // 调用后端API进行发布
         // 这里需要根据实际API接口调整
         final response = await widget.jenkins.dio.post(
-          '${widget.jenkins.url}/wms/publish', // 假设的API路径
+          '${widget.jenkins.url}/shipla/publish', // Shipla的API路径
           data: {
-            'countries': _selectedCountries,
             'op_type': _selectedOpTypes,
             'projects': _selectedProjects,
             'env': _env,
