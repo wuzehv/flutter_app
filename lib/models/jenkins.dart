@@ -341,54 +341,52 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
   Future<void> approveAllPending() async {
     if (_currentJenkins == null) return;
     
-    // 遍历所有待审核项，逐一调用审核接口
-    List<Map<String, dynamic>> successfulApprovals = [];
-    for (var item in pendingList) {
-      bool success = await executeAuditAction(
-        _currentJenkins!.user,
-        _currentJenkins!.token,
-        item['op_url']!,
-        approve: true,
-      );
-      
-      if (success) {
-        // 如果接口调用成功，标记为成功
-        successfulApprovals.add(item);
+    // 创建待审核列表的副本，避免在遍历时修改原列表
+    List<Map<String, dynamic>> itemsToApprove = List.from(pendingList);
+    
+    // 遍历所有待审核项，逐一调用单个审核方法
+    for (var item in itemsToApprove) {
+      try {
+        await approveSingleItem(item);
+      } catch (e) {
+        // 单个审核失败不影响其他项的审核
+        print('批量审核中单项失败: ${e.toString()}');
       }
     }
-    
-    // 从pendingList中移除已成功审核的项目
-    for (var item in successfulApprovals) {
-      pendingList.remove(item);
-    }
-    
-    // 更新待审核计数
-    pendingApprovalCount = pendingList.length;
-    
-    // 通知UI更新
-    notifyListeners();
   }
 
   Future<void> approveSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
+    
+    // 检查必要字段
+    final itemId = item['id'];
+    if (itemId == null) {
+      throw Exception('审核项缺少id字段');
+    }
 
     // 调用您已有的proceedBuild方法
-    await _currentJenkins!.proceedBuild(item['id']);
+    await _currentJenkins!.proceedBuild(itemId);
 
     // 从pendingList中移除该项目
-    pendingList.remove(item);
+    pendingList.removeWhere((element) => element['id'] == itemId);
     pendingApprovalCount = pendingList.length;
     notifyListeners();
   }
 
   Future<void> rejectSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
+    
+    // 检查必要字段
+    final itemId = item['id'];
+    if (itemId == null) {
+      throw Exception('审核项缺少id字段');
+    }
 
     // 调用您已有的abortBuild方法
-    await _currentJenkins!.abortBuild(item['id']);
+    await _currentJenkins!.abortBuild(itemId);
 
     // 从pendingList中移除该项目
-    pendingList.remove(item);
+    pendingList.removeWhere((element) => element['id'] == itemId);
     pendingApprovalCount = pendingList.length;
     notifyListeners();
   }

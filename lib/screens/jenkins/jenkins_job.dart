@@ -144,24 +144,27 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                   },
                   child: ListView(
                     children: [
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline,
-                              size: 80,
-                              color: Colors.grey[400],
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              '暂无待审核内容',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
+                      Container(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                size: 80,
+                                color: Colors.grey[400],
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 16),
+                              Text(
+                                '暂无待审核内容',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
