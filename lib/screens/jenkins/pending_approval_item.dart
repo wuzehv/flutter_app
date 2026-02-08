@@ -8,13 +8,38 @@ class PendingApprovalItem extends StatelessWidget {
   final Map<String, dynamic> item;
   final VoidCallback onReject;
   final VoidCallback onApprove;
+  final String currentUser;
 
   const PendingApprovalItem({
     Key? key,
     required this.item,
     required this.onReject,
     required this.onApprove,
+    required this.currentUser,
   }) : super(key: key);
+
+  // 构建状态图标
+  Widget _buildStatusIcon() {
+    final result = item['result'];
+    
+    if (result == 'SUCCESS') {
+      // 成功状态：绿色对勾
+      return Icon(Icons.check_circle, color: Colors.green);
+    } else if (result == 'ABORTED') {
+      // 中止状态：灰色叉号
+      return Icon(Icons.cancel, color: Colors.grey);
+    } else {
+      // 其他状态：圆形动态进度条（作为图标显示）
+      return SizedBox(
+        height: 24, 
+        width: 24, 
+        child: CircularProgressIndicator(
+          color: Colors.blue,
+          strokeWidth: 3,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +67,24 @@ class PendingApprovalItem extends StatelessWidget {
               ),
             ],
           ),
-          trailing: Text(
-            '${item['show_time'] ?? ''}',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          trailing: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.blue[200]!, width: 1),
+            ),
+            child: Text(
+              '${item['show_time'] ?? ''}',
+              style: TextStyle(
+                fontSize: 11, 
+                color: Colors.blue[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           subtitle: Text('${item['real_project'] ?? '未知项目'} by ${item['creator'] ?? '未知提交者'}'),
-          leading: Icon(Icons.pending_actions, color: Colors.orange),
+          leading: _buildStatusIcon(),
           childrenPadding: EdgeInsets.all(0),
           children: [
             Container(
@@ -63,20 +100,24 @@ class PendingApprovalItem extends StatelessWidget {
                     children: (item['build_params'] as List<dynamic>?)?.map((param) {
                       final p = param as Map<String, dynamic>;
                       return Padding(
-                        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-                        child: Wrap(
-                          alignment: WrapAlignment.start,
-                          crossAxisAlignment: WrapCrossAlignment.start,
-                          spacing: 8,
+                        padding: EdgeInsets.symmetric(vertical: 2, horizontal: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('${p['name']}:', style: TextStyle(fontWeight: FontWeight.w500)),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.green[50],
-                                borderRadius: BorderRadius.circular(4),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                p['value']?.toString() ?? '',
+                                softWrap: true,
+                                overflow: TextOverflow.visible,
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.red,
+                                  decorationThickness: 1.5,
+                                ),
                               ),
-                              child: Text(p['value']?.toString() ?? '', softWrap: true,),
                             ),
                           ],
                         ),
@@ -84,103 +125,30 @@ class PendingApprovalItem extends StatelessWidget {
                     }).toList() ?? [],
                   ),
                   SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onReject,
-                          icon: Icon(Icons.close, color: Colors.white),
-                          label: Text('拒绝', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  // 条件显示审核按钮：audit_id不为空且当前用户等于approver时显示
+                  if ((item['audit_id']?.toString() ?? '').isNotEmpty && 
+                      currentUser == (item['approver']?.toString() ?? ''))
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: onReject,
+                            icon: Icon(Icons.close, color: Colors.white),
+                            label: Text('拒绝', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onApprove,
-                          icon: Icon(Icons.check, color: Colors.white),
-                          label: Text('通过', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: onApprove,
+                            icon: Icon(Icons.check, color: Colors.white),
+                            label: Text('通过', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// 公共的构建历史项目组件
-class BuildHistoryItem extends StatelessWidget {
-  final Map<String, dynamic> item;
-  final VoidCallback onViewLog;
-  final VoidCallback onRebuild;
-
-  const BuildHistoryItem({
-    Key? key,
-    required this.item,
-    required this.onViewLog,
-    required this.onRebuild,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    late Widget icon;
-    if (item['result'] == 'SUCCESS') {
-      icon = Icon(Icons.check_circle, color: Colors.green);
-    } else if (item['result'] == 'FAILURE') {
-      icon = Icon(Icons.cancel, color: Colors.red);
-    } else {
-      icon = SizedBox(height: 17, width: 17, child: CircularProgressIndicator(color: Colors.blue));
-    }
-
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: icon,
-          title: Text(item['title'] ?? 'Unknown Title', style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(item['time'] ?? 'Unknown Time', style: TextStyle(color: Colors.grey, fontSize: 13.5)),
-          childrenPadding: EdgeInsets.all(0),
-          children: [
-            Container(
-              padding: EdgeInsets.all(16),
-              margin: EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('构建详情:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Text('ID: ${item['id']}'),
-                  SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onRebuild,
-                          icon: Icon(Icons.play_arrow, color: Colors.white),
-                          label: Text('立即构建', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onViewLog,
-                          icon: Icon(Icons.description, color: Colors.white),
-                          label: Text('查看日志', style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                        ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               ),
             )

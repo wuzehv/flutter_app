@@ -62,6 +62,14 @@ class JenkinsModel {
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
+  Future<void> proceedBuild(int id) async {
+    await _getDio().post('http://192.168.110.144:8989/open/proceed?id=$id');
+  }
+
+  Future<void> abortBuild(int id) async {
+    await _getDio().post('http://192.168.110.144:8989/open/abort?id=$id');
+  }
+
   Future<void> auditBuild(String opUrl) async {
     final jsonString = jsonEncode({"parameter": []});
 
@@ -347,39 +355,35 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
 
   Future<void> approveSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
-    
-    bool success = await executeAuditAction(
-      _currentJenkins!.user,
-      _currentJenkins!.token,
-      item['op_url']!,
-      approve: true,
-    );
-    
-    if (success) {
-      // 如果接口调用成功，从pendingList中移除该项目
+
+    try {
+      // 调用您已有的proceedBuild方法
+      await _currentJenkins!.proceedBuild(item['id']);
+
+      // 从pendingList中移除该项目
       pendingList.remove(item);
       pendingApprovalCount = pendingList.length;
       notifyListeners();
+      showSucc('审核通过成功');
+    } catch (e) {
+      showError('审核通过失败: $e');
     }
   }
 
   Future<void> rejectSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
-    
-    // 拒绝操作可能需要不同的URL
-    String rejectUrl = item['reject_url'] ?? item['op_url'];
-    bool success = await executeAuditAction(
-      _currentJenkins!.user,
-      _currentJenkins!.token,
-      rejectUrl,
-      approve: false,
-    );
-    
-    if (success) {
-      // 如果接口调用成功，从pendingList中移除该项目
+
+    try {
+      // 调用您已有的abortBuild方法
+      await _currentJenkins!.abortBuild(item['id']);
+
+      // 从pendingList中移除该项目
       pendingList.remove(item);
       pendingApprovalCount = pendingList.length;
       notifyListeners();
+      showSucc('审核拒绝成功');
+    } catch (e) {
+      showError('审核拒绝失败: $e');
     }
   }
   

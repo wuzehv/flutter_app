@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
+
 import 'pending_approval_item.dart';
+
+// 自动刷新间隔常量
+const int _AUTO_REFRESH_INTERVAL = 10; // 10秒
 
 class JenkinsLog extends StatefulWidget {
   final JenkinsModel jenkins;
@@ -15,8 +20,13 @@ class JenkinsLog extends StatefulWidget {
   State<StatefulWidget> createState() => _JenkinsLogState();
 }
 
-class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = ''; // 默认选择
+class _JenkinsLogState extends State<JenkinsLog> {
+  String _selectedFilter = ''; // 默认选择
   List<Map<String, dynamic>> _logList = []; // 存储日志列表
+  Timer? _refreshTimer; // 自动刷新定时器
+  Timer? _countdownTimer; // 倒计时定时器
+  bool _isAutoRefreshing = false; // 自动刷新状态
+  int _secondsUntilRefresh = _AUTO_REFRESH_INTERVAL; // 距离下次刷新的秒数
 
   @override
   void initState() {
@@ -27,8 +37,10 @@ class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = '';
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         await _loadLogs();
+        // 启动自动刷新定时器
+        _startAutoRefresh();
       } catch (e) {
-        // 错误处理
+        // 静默处理初始化错误
       }
     });
   }
@@ -40,10 +52,103 @@ class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = '';
     });
   }
 
+  // 启动自动刷新
+  void _startAutoRefresh() {
+    // 启动倒计时
+    _startCountdown();
+
+    _refreshTimer = Timer.periodic(Duration(seconds: _AUTO_REFRESH_INTERVAL), (timer) async {
+      if (mounted) {
+        setState(() {
+          _isAutoRefreshing = true;
+          _secondsUntilRefresh = _AUTO_REFRESH_INTERVAL; // 重置倒计时
+        });
+
+        try {
+          await _loadLogs();
+          // 重新启动倒计时
+          _startCountdown();
+        } catch (e) {
+          // 静默处理刷新错误
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isAutoRefreshing = false;
+            });
+          }
+        }
+      }
+    });
+  }
+
+  // 启动倒计时
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    _secondsUntilRefresh = _AUTO_REFRESH_INTERVAL;
+
+    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _secondsUntilRefresh--;
+          if (_secondsUntilRefresh <= 0) {
+            _secondsUntilRefresh = _AUTO_REFRESH_INTERVAL;
+          }
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  // 停止自动刷新
+  void _stopAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  @override
+  void dispose() {
+    // 页面销毁时停止所有定时器
+    _stopAutoRefresh();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.name)),
+      appBar: AppBar(
+        title: Text(widget.name),
+        actions: [
+          // 显示自动刷新倒计时
+          Container(
+            margin: EdgeInsets.only(right: 16),
+            child: Text(
+              '自动刷新中，$_secondsUntilRefresh秒后刷新',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 14,
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.red,
+              ),
+            ),
+          ),
+          // 显示刷新状态
+          if (_isAutoRefreshing)
+            Container(
+              margin: EdgeInsets.only(right: 16),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.yellow),
+                ),
+              ),
+            ),
+        ],
+      ),
       body: Column(
         children: [
           // 下拉搜索选项
@@ -78,7 +183,7 @@ class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = '';
                 try {
                   await _loadLogs();
                 } catch (e) {
-                  // 错误处理
+                  // 静默处理手动刷新错误
                 }
               },
               child: ListView.builder(
@@ -87,11 +192,12 @@ class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = '';
                   final item = _logList[index];
                   return PendingApprovalItem(
                     item: item,
+                    currentUser: widget.jenkins.user,
                     onReject: () {
                       // 调用审核拒绝接口
                       try {
-                        // context.read<JenkinsJobProvider>().rejectSingleItem(item);
-                        showInfo('已拒绝');
+                        widget.jenkins.abortBuild(item["id"]);
+                        showSucc('已拒绝');
                       } catch (e) {
                         showError('拒绝失败');
                       }
@@ -99,8 +205,8 @@ class _JenkinsLogState extends State<JenkinsLog> {  String _selectedFilter = '';
                     onApprove: () {
                       // 调用审核通过接口
                       try {
-                        // context.read<JenkinsJobProvider>().approveSingleItem(item);
-                        showInfo('已通过');
+                        widget.jenkins.proceedBuild(item["id"]);
+                        showSucc('已通过');
                       } catch (e) {
                         showError('通过失败');
                       }

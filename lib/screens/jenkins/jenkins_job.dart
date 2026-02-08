@@ -208,6 +208,7 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                           final item = provider.getPendingList[index];
                           return PendingApprovalItem(
                             item: item,
+                            currentUser: provider.currentJenkins?.user ?? '',
                             onReject: () {
                               // 调用审核拒绝接口
                               try {
