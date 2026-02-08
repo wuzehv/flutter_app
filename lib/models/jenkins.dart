@@ -7,6 +7,9 @@ import 'package:jenkins_app/common/jenkins_global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
 
+// Jenkins API 基础URL常量
+const String JENKINS_BASE_URL = 'http://192.168.110.144:8989';
+
 class JenkinsModel {
   late String? id;
   final String remark;
@@ -48,23 +51,23 @@ class JenkinsModel {
   }
 
   Future<List<Map<String, dynamic>>> getJobList() async {
-    final response = await _getDio().get('http://192.168.110.144:8989/open/projects');
+    final response = await _getDio().get('$JENKINS_BASE_URL/open/projects');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getPendingList() async {
-    final response = await _getDio().get('http://192.168.110.144:8989/open/pending?user=$user');
+    final response = await _getDio().get('$JENKINS_BASE_URL/open/pending?user=$user');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getBuildList(String project) async {
-    final response = await _getDio().get('http://192.168.110.144:8989/open/builds?project=$project');
+    final response = await _getDio().get('$JENKINS_BASE_URL/open/builds?project=$project');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<void> proceedBuild(int id) async {
     try {
-      await _getDio().post('http://192.168.110.144:8989/open/proceed?id=$id');
+      await _getDio().post('$JENKINS_BASE_URL/open/proceed?id=$id');
       showSucc('已通过');
     } catch (e) {
       showError('操作失败，请检查任务');
@@ -73,7 +76,7 @@ class JenkinsModel {
 
   Future<void> abortBuild(int id) async {
     try {
-      await _getDio().post('http://192.168.110.144:8989/open/abort?id=$id');
+      await _getDio().post('$JENKINS_BASE_URL/open/abort?id=$id');
       showSucc('已拒绝');
     } catch (e) {
       showError('操作失败，请检查任务');
