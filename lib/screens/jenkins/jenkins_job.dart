@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:provider/provider.dart';
+
 import 'pending_approval_item.dart';
 
 class JenkinsJob extends StatefulWidget {
@@ -141,25 +142,29 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                       // 错误处理
                     }
                   },
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 80,
-                          color: Colors.grey[400],
+                  child: ListView(
+                    children: [
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 80,
+                              color: Colors.grey[400],
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              '暂无待审核内容',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: 16),
-                        Text(
-                          '暂无待审核内容',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }
@@ -211,21 +216,11 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                             currentUser: provider.currentJenkins?.user ?? '',
                             onReject: () {
                               // 调用审核拒绝接口
-                              try {
-                                context.read<JenkinsJobProvider>().rejectSingleItem(item);
-                                showInfo('已拒绝');
-                              } catch (e) {
-                                showError('拒绝失败');
-                              }
+                              context.read<JenkinsJobProvider>().rejectSingleItem(item);
                             },
                             onApprove: () {
                               // 调用审核通过接口
-                              try {
-                                context.read<JenkinsJobProvider>().approveSingleItem(item);
-                                showInfo('已通过');
-                              } catch (e) {
-                                showError('通过失败');
-                              }
+                              context.read<JenkinsJobProvider>().approveSingleItem(item);
                             },
                           );
                         },

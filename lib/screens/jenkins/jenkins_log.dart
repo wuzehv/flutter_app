@@ -195,21 +195,11 @@ class _JenkinsLogState extends State<JenkinsLog> {
                     currentUser: widget.jenkins.user,
                     onReject: () {
                       // 调用审核拒绝接口
-                      try {
-                        widget.jenkins.abortBuild(item["id"]);
-                        showSucc('已拒绝');
-                      } catch (e) {
-                        showError('拒绝失败');
-                      }
+                      widget.jenkins.abortBuild(item["id"]);
                     },
                     onApprove: () {
                       // 调用审核通过接口
-                      try {
-                        widget.jenkins.proceedBuild(item["id"]);
-                        showSucc('已通过');
-                      } catch (e) {
-                        showError('通过失败');
-                      }
+                      widget.jenkins.proceedBuild(item["id"]);
                     },
                   );
                 },

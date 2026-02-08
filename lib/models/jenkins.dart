@@ -63,11 +63,21 @@ class JenkinsModel {
   }
 
   Future<void> proceedBuild(int id) async {
-    await _getDio().post('http://192.168.110.144:8989/open/proceed?id=$id');
+    try {
+      await _getDio().post('http://192.168.110.144:8989/open/proceed?id=$id');
+      showSucc('已通过');
+    } catch (e) {
+      showError('操作失败，请检查任务');
+    }
   }
 
   Future<void> abortBuild(int id) async {
-    await _getDio().post('http://192.168.110.144:8989/open/abort?id=$id');
+    try {
+      await _getDio().post('http://192.168.110.144:8989/open/abort?id=$id');
+      showSucc('已拒绝');
+    } catch (e) {
+      showError('操作失败，请检查任务');
+    }
   }
 
   Future<void> auditBuild(String opUrl) async {
@@ -274,11 +284,17 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
     notifyListeners();
   }
 
-  Future<List<Map<String, dynamic>>?> fetchPendingApproval() async {
+  Future<void> fetchPendingApproval() async {
+    if (_currentJenkins == null) return;
     try {
       final response = await _currentJenkins?.getPendingList();
-      return response;
+      pendingList = response!;
+      pendingApprovalCount = response.length;
+      notifyListeners();
     } catch (e) {
+      pendingList = [];
+      pendingApprovalCount = 0;
+      notifyListeners();
       rethrow;
     }
   }
@@ -356,35 +372,25 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
   Future<void> approveSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
 
-    try {
-      // 调用您已有的proceedBuild方法
-      await _currentJenkins!.proceedBuild(item['id']);
+    // 调用您已有的proceedBuild方法
+    await _currentJenkins!.proceedBuild(item['id']);
 
-      // 从pendingList中移除该项目
-      pendingList.remove(item);
-      pendingApprovalCount = pendingList.length;
-      notifyListeners();
-      showSucc('审核通过成功');
-    } catch (e) {
-      showError('审核通过失败: $e');
-    }
+    // 从pendingList中移除该项目
+    pendingList.remove(item);
+    pendingApprovalCount = pendingList.length;
+    notifyListeners();
   }
 
   Future<void> rejectSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
 
-    try {
-      // 调用您已有的abortBuild方法
-      await _currentJenkins!.abortBuild(item['id']);
+    // 调用您已有的abortBuild方法
+    await _currentJenkins!.abortBuild(item['id']);
 
-      // 从pendingList中移除该项目
-      pendingList.remove(item);
-      pendingApprovalCount = pendingList.length;
-      notifyListeners();
-      showSucc('审核拒绝成功');
-    } catch (e) {
-      showError('审核拒绝失败: $e');
-    }
+    // 从pendingList中移除该项目
+    pendingList.remove(item);
+    pendingApprovalCount = pendingList.length;
+    notifyListeners();
   }
   
   // 获取当前Jenkins实例的getter
