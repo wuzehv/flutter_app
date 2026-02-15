@@ -11,6 +11,7 @@ class ChoiceSelector extends StatelessWidget {
   final bool showSelectAll;
   final bool isMultiSelect;
   final String? selectedValue;
+  final Set<String>? k8sOptions; // 标识哪些选项属于k8s，需要显示角标
 
   const ChoiceSelector({
     super.key,
@@ -23,6 +24,7 @@ class ChoiceSelector extends StatelessWidget {
     this.showSelectAll = false,
     this.isMultiSelect = true,
     this.selectedValue,
+    this.k8sOptions,
   });
 
   @override
@@ -89,6 +91,7 @@ class ChoiceSelector extends StatelessWidget {
               return _CustomChip(
                 label: option,
                 isSelected: isSelected,
+                isK8s: k8sOptions?.contains(option) ?? false,
                 onTap: () {
                   if (isMultiSelect) {
                     onSelectionChanged(option);
@@ -111,12 +114,14 @@ class ChoiceSelector extends StatelessWidget {
 class _CustomChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final bool isK8s; // 是否显示k8s角标
   final VoidCallback onTap;
 
   const _CustomChip({
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.isK8s = false,
   });
 
   @override
@@ -130,7 +135,7 @@ class _CustomChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? Colors.green : Colors.grey[300]!,
-            width: 1,
+            width: isK8s ? 2 : 1, // K8s国家显示粗边框
           ),
           boxShadow: isSelected
               ? [
@@ -142,12 +147,24 @@ class _CustomChip extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : Colors.black87,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.white : Colors.black87,
+              ),
+            ),
+            if (isK8s)
+              Container(
+                margin: EdgeInsets.only(top: 2),
+                height: 2,
+                width: 20,
+                color: Colors.orange,
+              ),
+          ],
         ),
       ),
     );

@@ -8,7 +8,7 @@ import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
 
 // Jenkins API 基础URL常量
-const String JENKINS_BASE_URL = 'http://192.168.110.144:8989';
+const String JENKINS_BASE_URL = 'http://192.168.18.4:8989';
 
 class JenkinsModel {
   late String? id;
@@ -189,6 +189,24 @@ class JenkinsModel {
     return null;
   }
 
+  // 获取构建参数的通用方法
+  Future<Map<String, dynamic>> getBuildParams(String projectName) async {
+    try {
+      final response = await _getDio().get('$JENKINS_BASE_URL/open/build_params?project=$projectName');
+
+      if (response.statusCode == 200) {
+        // 直接返回需要的数据结构
+        final rawData = response.data;
+        return rawData['data']?['data'] as Map<String, dynamic>;
+      } else {
+        throw Exception('API返回状态码: ${response.statusCode}');
+      }
+    } catch (e) {
+      showError('获取构建参数失败: ${e.toString()}');
+      rethrow;
+    }
+  }
+
   Future<void> toLogPage(BuildContext context, String name, [bool fromList = true]) async {
     // final loader = context.read<LoadingProvider>();
     // loader.show();
@@ -320,20 +338,20 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
   // 通用的审核方法，接收user, token, id作为参数
   Future<bool> executeAuditAction(String user, String token, String id, {bool approve = true}) async {
     if (_currentJenkins == null) return false;
-    
+
     try {
       // 构造认证头
       String basicAuth = 'Basic ${base64Encode(utf8.encode('$user:$token'))}';
-      
+
       // 创建临时Dio实例用于此操作
       Dio tempDio = Dio();
       tempDio.options.headers['Authorization'] = basicAuth;
       tempDio.options.headers['Content-Type'] = Headers.jsonContentType;
-      
+
       // 根据操作类型构建URL
       String apiUrl = '${_currentJenkins!.url}$id';
       final response = await tempDio.post(apiUrl);
-      
+
       return response.statusCode == 200;
     } catch (e) {
       print('审核操作失败: $e');
@@ -343,10 +361,10 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
 
   Future<void> approveAllPending() async {
     if (_currentJenkins == null) return;
-    
+
     // 创建待审核列表的副本，避免在遍历时修改原列表
     List<Map<String, dynamic>> itemsToApprove = List.from(pendingList);
-    
+
     // 遍历所有待审核项，逐一调用单个审核方法
     for (var item in itemsToApprove) {
       try {
@@ -360,7 +378,7 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
 
   Future<void> approveSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
-    
+
     // 检查必要字段
     final itemId = item['id'];
     if (itemId == null) {
@@ -378,7 +396,7 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
 
   Future<void> rejectSingleItem(Map<String, dynamic> item) async {
     if (_currentJenkins == null) return;
-    
+
     // 检查必要字段
     final itemId = item['id'];
     if (itemId == null) {
@@ -393,7 +411,7 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
     pendingApprovalCount = pendingList.length;
     notifyListeners();
   }
-  
+
   // 获取当前Jenkins实例的getter
   JenkinsModel? get currentJenkins => _currentJenkins;
 }

@@ -27,11 +27,11 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
   String _ctBranch = 'master'; // GO分支默认填充master
   String _approver = '';
   
-  // 可选项数据（这些通常会从后端获取）
-  List<String> _opTypes = ['web', 'ct']; // 示例数据
-  List<String> _projects = ['project_a', 'project_b', 'project_c']; // 示例数据
-  List<String> _envs = ['pro']; // 环境选项（去掉tra）
-  List<String> _approvers = ['admin', 'manager', 'developer', 'super_admin', 'chief_approver']; // 所有审核人（去掉超级审核人逻辑）
+  // 动态获取的数据
+  List<String> _opTypes = ['web', 'ct']; // 操作类型固定值
+  List<String> _projects = [];
+  List<String> _envs = ['pro']; // 环境选项保持不变
+  List<String> _approvers = []; // 从API获取审核人列表
 
   @override
   void initState() {
@@ -39,8 +39,8 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
     // 初始化控制器值
     _branchController.text = _branch;
     _ctBranchController.text = _ctBranch;
-    // 初始化时加载审核人列表
-    _loadApprovers();
+    // 初始化时加载构建参数
+    _loadBuildParams();
   }
 
   @override
@@ -50,18 +50,24 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
     super.dispose();
   }
 
-  Future<void> _loadApprovers() async {
-    // 这里应该从API获取审核人列表
-    // 暂时使用示例数据
-    setState(() {
-      // 所有审核人都有相同权限
-      _approvers = ['admin', 'manager', 'developer', 'super_admin', 'chief_approver'];
+  Future<void> _loadBuildParams() async {
+    try {
+      final data = await widget.jenkins.getBuildParams(widget.projectName);
       
-      // 设置默认审核人
-      if (_approvers.isNotEmpty) {
-        _approver = _approvers[0];
-      }
-    });
+      setState(() {
+        // 从API响应中提取数据
+        // _opTypes = List<String>.from(data['op_types'] ?? []); // 操作类型使用固定值
+        _projects = List<String>.from(data['projects'] ?? []);
+        _approvers = List<String>.from(data['approvers'] ?? []);
+        
+        // 设置默认审核人
+        if (_approvers.isNotEmpty) {
+          _approver = _approvers[0];
+        }
+      });
+    } catch (e) {
+      showError('获取构建参数失败: ${e.toString()}');
+    }
   }
 
   @override
@@ -78,6 +84,26 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 环境选择（改为复选样式）- 移到最上面
+                ChoiceSelector(
+                  title: '环境',
+                  options: _envs,
+                  selectedValues: [], // 多选模式下使用
+                  selectedValue: _env, // 单选模式下使用
+                  isMultiSelect: false, // 单选模式
+                  onSelectionChanged: (env) {
+                    setState(() {
+                      _env = env;
+                      // 根据环境智能填充PHP分支
+                      if (env == 'pro') {
+                        _branch = 'master';
+                      }
+                      // 同时更新控制器
+                      _branchController.text = _branch;
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
 
                 // 操作类型选择
                 ChoiceSelector(
@@ -108,29 +134,8 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
                       } else {
                         _selectedProjects.add(project);
                       }
-                      // 项目选择变化时重新加载审核人
-                      _loadApprovers();
-                    });
-                  },
-                ),
-                SizedBox(height: 16),
-
-                // 环境选择（改为复选样式）
-                ChoiceSelector(
-                  title: '环境',
-                  options: _envs,
-                  selectedValues: [], // 多选模式下使用
-                  selectedValue: _env, // 单选模式下使用
-                  isMultiSelect: false, // 单选模式
-                  onSelectionChanged: (env) {
-                    setState(() {
-                      _env = env;
-                      // 根据环境智能填充PHP分支
-                      if (env == 'pro') {
-                        _branch = 'master';
-                      }
-                      // 同时更新控制器
-                      _branchController.text = _branch;
+                      // 项目选择变化时重新加载构建参数
+                      _loadBuildParams();
                     });
                   },
                 ),

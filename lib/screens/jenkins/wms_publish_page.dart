@@ -18,7 +18,7 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _branchController = TextEditingController();
   final TextEditingController _ctBranchController = TextEditingController();
-  
+
   // 对应Wms结构体的字段
   List<String> _selectedCountries = [];
   List<String> _selectedOpTypes = [];
@@ -27,23 +27,35 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
   String _branch = 'master'; // PHP分支根据环境智能填充
   String _ctBranch = 'master'; // GO分支默认填充master
   String _approver = '';
-  
-  // 可选项数据（这些通常会从后端获取）
-  List<String> _countries = ['CN', 'US', 'UK', 'JP', 'SG', 'ID']; // 添加SG和ID
-  List<String> _opTypes = ['web', 'ct']; // 示例数据
-  List<String> _projects = ['project_a', 'project_b', 'project_c']; // 示例数据
-  List<String> _envs = ['tra', 'pro']; // 环境选项
-  List<String> _approvers = []; // 审核人列表
-  
-  // 每个项目对应的审核人列表
-  Map<String, List<String>> _projectApprovers = {
-    'project_a': ['admin_a', 'manager_a', 'developer_a'],
-    'project_b': ['admin_a', 'manager_b', 'developer_b'],
-    'project_c': ['admin_a', 'manager_c', 'developer_c'],
-  };
-  
-  // SG和ID国家的特殊审核人
-  List<String> _specialCountryApprovers = ['admin_a', 'id_approver'];
+
+  // 动态获取的数据
+  List<String> _countries = [];
+  List<String> _opTypes = ['web', 'ct']; // 操作类型固定值
+  List<String> _projects = [];
+  List<String> _envs = ['tra', 'pro']; // 环境选项保持不变
+  List<String> _approvers = [];
+
+  // K8s相关数据
+  List<String> _k8sTra = [];
+  List<String> _k8sPro = [];
+
+  // 每个项目对应的审核人列表（从API获取）
+  Map<String, List<String>> _projectApprovers = {};
+
+  // SCM项目审核人映射 {中文名: 英文名}
+  Map<String, String> _scmApproversMap = {};
+
+  // BOSS项目审核人映射 {中文名: 英文名}
+  Map<String, String> _bossApproversMap = {};
+
+  // WMS项目审核人映射 {中文名: 英文名}
+  Map<String, String> _wmsApproversMap = {};
+
+  // 特殊国家审核人映射（与wms相同）
+  Map<String, String> _specialCountryApproversMap = {};
+
+  // 用于显示的中文审核人列表
+  List<String> _displayApprovers = [];
 
   @override
   void initState() {
@@ -51,8 +63,8 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     // 初始化控制器值
     _branchController.text = _branch;
     _ctBranchController.text = _ctBranch;
-    // 初始化时加载审核人列表
-    _loadApprovers();
+    // 初始化时加载构建参数
+    _loadBuildParams();
   }
 
   @override
@@ -62,82 +74,195 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     super.dispose();
   }
 
-  Future<void> _loadApprovers() async {
-    // 这里应该从API获取审核人列表
-    // 暂时使用示例数据
-    setState(() {
-      // 计算符合条件的审核人
-      _calculateQualifiedApprovers();
-      
-      // 设置默认审核人
-      if (_approvers.isNotEmpty) {
-        _approver = _approvers[0];
-      }
-    });
+  Future<void> _loadBuildParams() async {
+    try {
+      final data = await widget.jenkins.getBuildParams(widget.projectName);
+
+      setState(() {
+        // 从API响应中提取数据
+        _countries = List<String>.from(data['countries'] ?? []);
+        _projects = List<String>.from(data['projects'] ?? []);
+
+        // 获取k8s国家列表
+        _k8sTra = List<String>.from(data['k8s_tra'] ?? []);
+        _k8sPro = List<String>.from(data['k8s_pro'] ?? []);
+
+        // 审核人相关数据 - 处理map结构 {中文名: 英文名}
+        _scmApproversMap = Map<String, String>.from(data['scm_approvers'] as Map<String, dynamic>? ?? {});
+        _bossApproversMap = Map<String, String>.from(data['boss_approvers'] as Map<String, dynamic>? ?? {});
+        _wmsApproversMap = Map<String, String>.from(data['wms_approvers'] as Map<String, dynamic>? ?? {});
+
+        // 特殊国家审核人与wms相同
+        _specialCountryApproversMap = Map<String, String>.from(data['wms_approvers'] as Map<String, dynamic>? ?? {});
+
+        // 构建项目审核人映射
+        _projectApprovers = {
+          'scm': _scmApproversMap.values.toList(),
+          'boss': _bossApproversMap.values.toList(),
+          'wms': _wmsApproversMap.values.toList(),
+        };
+
+        // 计算符合条件的审核人
+        _calculateQualifiedApprovers();
+
+        // 设置默认审核人
+        if (_approvers.isNotEmpty) {
+          _approver = _approvers[0];
+        }
+      });
+    } catch (e) {
+      showError('获取构建参数失败: ${e.toString()}');
+    }
   }
-  
+
   // 计算符合条件的审核人
   void _calculateQualifiedApprovers() {
     if (_selectedProjects.isEmpty) {
       _approvers = [];
+      _displayApprovers = [];
       return;
     }
-    
+
     Set<String> qualifiedApprovers = <String>{};
-    bool hasSpecialCountry = _selectedCountries.any((country) => 
-      country.toUpperCase() == 'SG' || country.toUpperCase() == 'ID');
-    
-    // 获取所有选中项目的审核人交集
-    Set<String> projectApproverIntersection = _getProjectApproverIntersection();
-    
-    if (hasSpecialCountry) {
-      // 特殊情况：包含SG/ID国家
-      // 审核人必须同时满足：
-      // 1. 在所有选中项目的审核人交集中
-      // 2. 在SG/ID特殊审核人列表中
-      Set<String> specialApprovers = Set.from(_specialCountryApprovers);
-      qualifiedApprovers = projectApproverIntersection.intersection(specialApprovers);
+    Set<String> displayApproversSet = <String>{};
+
+    // 判断是否只选择了k8s国家
+    bool isOnlyK8sCountries = _isOnlyK8sCountriesSelected();
+
+    if (isOnlyK8sCountries) {
+      // 只选择k8s国家的情况：使用wms_approvers
+      qualifiedApprovers = Set.from(_wmsApproversMap.values);
     } else {
-      // 普通情况：只考虑项目审核人交集
-      qualifiedApprovers = projectApproverIntersection;
+      // 其他情况：显示项目审核人的交集
+      qualifiedApprovers = _getProjectApproverIntersection();
     }
-    
+
+    // 获取对应的中文显示名称
+    for (var englishName in qualifiedApprovers) {
+      String chineseName = _getChineseNameByEnglish(englishName);
+      if (chineseName.isNotEmpty) {
+        displayApproversSet.add(chineseName);
+      }
+    }
+
     // 转换为列表并排序
     _approvers = qualifiedApprovers.toList()..sort();
+    _displayApprovers = displayApproversSet.toList()..sort();
   }
-  
+
+  // 判断是否只选择了k8s国家
+  bool _isOnlyK8sCountriesSelected() {
+    if (_selectedCountries.isEmpty) return false;
+
+    // 获取当前环境的k8s国家列表
+    Set<String> currentK8sCountries = _getK8sCountriesForCurrentEnv();
+
+    // 检查所选国家是否都在k8s国家列表中
+    for (String country in _selectedCountries) {
+      if (!currentK8sCountries.contains(country)) {
+        return false; // 发现非k8s国家
+      }
+    }
+
+    return true; // 所有选择的国家都是k8s国家
+  }
+
   // 获取项目审核人交集
   Set<String> _getProjectApproverIntersection() {
     if (_selectedProjects.isEmpty) return <String>{};
-    
+
     // 初始化为第一个项目的审核人列表
     Set<String> intersection = <String>{};
     String firstProject = _selectedProjects[0];
-    if (_projectApprovers.containsKey(firstProject)) {
-      intersection.addAll(_projectApprovers[firstProject]!);
+
+    // 根据项目名称获取对应的审核人列表
+    List<String> firstProjectApprovers = _getProjectApproversByName(firstProject);
+    if (firstProjectApprovers.isNotEmpty) {
+      intersection.addAll(firstProjectApprovers);
     }
-    
+
     // 与其他项目的审核人列表求交集
     for (int i = 1; i < _selectedProjects.length; i++) {
       String project = _selectedProjects[i];
-      if (_projectApprovers.containsKey(project)) {
-        Set<String> projectApprovers = Set.from(_projectApprovers[project]!);
-        intersection = intersection.intersection(projectApprovers);
+      List<String> projectApprovers = _getProjectApproversByName(project);
+      if (projectApprovers.isNotEmpty) {
+        intersection = intersection.intersection(Set.from(projectApprovers));
       } else {
         // 如果某个项目没有审核人列表，则交集为空
         return <String>{};
       }
     }
-    
+
     return intersection;
+  }
+
+  // 根据项目名称获取审核人列表（英文名）
+  List<String> _getProjectApproversByName(String projectName) {
+    // 将项目名称映射到对应的审核人列表
+    if (projectName.toLowerCase().contains('scm')) {
+      return _scmApproversMap.values.toList();
+    } else if (projectName.toLowerCase().contains('boss')) {
+      return _bossApproversMap.values.toList();
+    } else if (projectName.toLowerCase().contains('wms')) {
+      return _wmsApproversMap.values.toList();
+    }
+    return [];
+  }
+
+  // 根据英文名获取中文名
+  String _getChineseNameByEnglish(String englishName) {
+    // 在所有审核人map中查找对应的中文名
+    if (_scmApproversMap.containsValue(englishName)) {
+      return _scmApproversMap.keys.firstWhere((key) => _scmApproversMap[key] == englishName);
+    }
+    if (_bossApproversMap.containsValue(englishName)) {
+      return _bossApproversMap.keys.firstWhere((key) => _bossApproversMap[key] == englishName);
+    }
+    if (_wmsApproversMap.containsValue(englishName)) {
+      return _wmsApproversMap.keys.firstWhere((key) => _wmsApproversMap[key] == englishName);
+    }
+    return '';
+  }
+
+  // 根据环境计算当前可用国家列表
+  List<String> _getCurrentCountries() {
+    if (_env == 'tra') {
+      // tra环境：取k8s_tra和国家列表的交集
+      Set<String> k8sTraSet = Set.from(_k8sTra);
+      Set<String> countriesSet = Set.from(_countries);
+      Set<String> filteredCountries = k8sTraSet.intersection(countriesSet);
+      return filteredCountries.toList()..sort();
+    } else {
+      // 其他环境：返回完整国家列表
+      return _countries;
+    }
+  }
+
+  // 获取当前环境对应的k8s国家集合
+  Set<String> _getK8sCountriesForCurrentEnv() {
+    if (_env == 'tra') {
+      return Set.from(_k8sTra);
+    } else if (_env == 'pro') {
+      return Set.from(_k8sPro);
+    } else {
+      return {};
+    }
+  }
+
+  // 获取WMS发布页面在当前环境下的可用国家列表
+  List<String> _getFilteredCountries() {
+    return _getCurrentCountries();
+  }
+
+  // 根据中文名获取英文名（用于提交）
+  String _getEnglishNameByChinese(String chineseName) {
+    return _scmApproversMap[chineseName] ?? _bossApproversMap[chineseName] ?? _wmsApproversMap[chineseName] ?? '';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.projectName} - 发布'),
-      ),
+      appBar: AppBar(title: Text('${widget.projectName} - 发布')),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(
@@ -146,12 +271,44 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 环境选择（改为复选样式）- 移到最上面
+                ChoiceSelector(
+                  title: '环境',
+                  options: _envs,
+                  selectedValues: [],
+                  // 多选模式下使用
+                  selectedValue: _env,
+                  // 单选模式下使用
+                  isMultiSelect: false,
+                  // 单选模式
+                  onSelectionChanged: (env) {
+                    setState(() {
+                      _env = env;
+                      // 根据环境智能填充PHP分支
+                      if (env == 'tra') {
+                        _branch = 'training';
+                      } else if (env == 'pro') {
+                        _branch = 'master';
+                      }
+                      // 环境变化时重新计算审核人
+                      _calculateQualifiedApprovers();
+                      // 同时更新控制器
+                      _branchController.text = _branch;
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+
                 // 国家列表选择（增加全选功能）
                 ChoiceSelector(
                   title: '国家列表',
-                  options: _countries,
+                  options: _getFilteredCountries(),
+                  // 使用过滤后的国家列表
                   selectedValues: _selectedCountries,
-                  showSelectAll: true, // 启用全选功能
+                  showSelectAll: true,
+                  // 启用全选功能
+                  k8sOptions: _getK8sCountriesForCurrentEnv(),
+                  // 传入当前环境的k8s国家标识
                   onSelectionChanged: (country) {
                     setState(() {
                       if (_selectedCountries.contains(country)) {
@@ -159,15 +316,15 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
                       } else {
                         _selectedCountries.add(country);
                       }
-                      // 国家选择变化时重新加载审核人
-                      _loadApprovers();
+                      // 国家选择变化时重新计算审核人
+                      _calculateQualifiedApprovers();
                     });
                   },
                   onSelectAll: (selectedCountries) {
                     setState(() {
                       _selectedCountries = selectedCountries;
-                      // 全选变化时重新加载审核人
-                      _loadApprovers();
+                      // 全选变化时重新计算审核人
+                      _calculateQualifiedApprovers();
                     });
                   },
                 ),
@@ -202,31 +359,8 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
                       } else {
                         _selectedProjects.add(project);
                       }
-                      // 项目选择变化时重新加载审核人
-                      _loadApprovers();
-                    });
-                  },
-                ),
-                SizedBox(height: 16),
-
-                // 环境选择（改为复选样式）
-                ChoiceSelector(
-                  title: '环境',
-                  options: _envs,
-                  selectedValues: [], // 多选模式下使用
-                  selectedValue: _env, // 单选模式下使用
-                  isMultiSelect: false, // 单选模式
-                  onSelectionChanged: (env) {
-                    setState(() {
-                      _env = env;
-                      // 根据环境智能填充PHP分支
-                      if (env == 'tra') {
-                        _branch = 'training';
-                      } else if (env == 'pro') {
-                        _branch = 'master';
-                      }
-                      // 同时更新控制器
-                      _branchController.text = _branch;
+                      // 项目选择变化时重新计算审核人
+                      _calculateQualifiedApprovers();
                     });
                   },
                 ),
@@ -279,13 +413,18 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
                 // 审核人选择（改为复选样式）
                 ChoiceSelector(
                   title: '审核人',
-                  options: _approvers,
-                  selectedValues: [], // 多选模式下使用
-                  selectedValue: _approver, // 单选模式下使用
-                  isMultiSelect: false, // 单选模式
-                  onSelectionChanged: (approver) {
+                  options: _displayApprovers,
+                  // 使用中文显示列表
+                  selectedValues: [],
+                  // 多选模式下使用
+                  selectedValue: _approver,
+                  // 单选模式下使用
+                  isMultiSelect: false,
+                  // 单选模式
+                  onSelectionChanged: (chineseApprover) {
                     setState(() {
-                      _approver = approver;
+                      // 保存中文名用于显示，提交时转换为英文名
+                      _approver = chineseApprover;
                     });
                   },
                 ),
@@ -343,7 +482,7 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
 
       // 显示加载状态
       showInfo('正在提交发布请求...');
-      
+
       try {
         // 调用后端API进行发布
         // 这里需要根据实际API接口调整
@@ -356,10 +495,10 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
             'env': _env,
             'branch': _branch,
             'ct_branch': _ctBranch,
-            'approver': _approver,
+            'approver': _getEnglishNameByChinese(_approver), // 提交英文名
           },
         );
-        
+
         if (response.statusCode == 200) {
           showSucc('发布请求提交成功');
           Navigator.pop(context); // 返回上一页
