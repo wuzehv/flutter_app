@@ -49,24 +49,61 @@ class PendingApprovalItem extends StatelessWidget {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Row(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('【${item['country'] ?? ''}】 '),
+              // 第一行：国家信息（黑色字体）
+              Text(
+                '【${item['country'] ?? ''}】',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: 6),
+              // 第二行：分支信息（紫色标签样式）
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(4),
+                  color: Colors.purple[50],
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.purple[300]!, width: 1),
                 ),
-                child: Text(
-                  (item['branch'] ?? '').toString().length > 25 
-                    ? (item['branch'] ?? '').toString().substring(0, 25) + '...'
-                    : item['branch'] ?? '',
-                  style: TextStyle(fontSize: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.account_tree, size: 14, color: Colors.purple[600]),
+                    SizedBox(width: 4),
+                    Text(
+                      (item['branch'] ?? '').toString().length > 25 
+                        ? (item['branch'] ?? '').toString().substring(0, 25) + '...'
+                        : item['branch'] ?? '',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.purple[700],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
+              ),
+              SizedBox(height: 6),
+              // 第三行：项目和提交者信息（深灰色副标题）
+              Text(
+                '${item['real_project'] ?? '未知项目'} by ${item['creator'] ?? '未知提交者'}',
+                style: TextStyle(
+                  fontSize: 13, 
+                  color: Colors.grey[700],
+                  fontStyle: FontStyle.italic,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
+          leading: _buildStatusIcon(),
           trailing: Container(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -83,8 +120,6 @@ class PendingApprovalItem extends StatelessWidget {
               ),
             ),
           ),
-          subtitle: Text('${item['real_project'] ?? '未知项目'} by ${item['creator'] ?? '未知提交者'}'),
-          leading: _buildStatusIcon(),
           childrenPadding: EdgeInsets.all(0),
           children: [
             Container(
