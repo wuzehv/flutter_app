@@ -148,6 +148,9 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     // 转换为列表并排序
     _approvers = qualifiedApprovers.toList()..sort();
     _displayApprovers = displayApproversSet.toList()..sort();
+
+    // 将领导置顶显示
+    _sortApproversWithLeadersFirst();
   }
 
   // 判断是否只选择了k8s国家
@@ -165,6 +168,36 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     }
 
     return true; // 所有选择的国家都是k8s国家
+  }
+
+  static const List<String> LEADERS = ['张俊兴'];
+
+  // 将领导置顶排序
+  void _sortApproversWithLeadersFirst() {
+    // 如果没有配置领导，则保持原有排序
+    if (LEADERS.isEmpty) {
+      _displayApprovers.sort();
+      return;
+    }
+
+    // 分离领导和普通员工
+    final leaderApprovers = <String>[];
+    final regularApprovers = <String>[];
+
+    for (String approver in _displayApprovers) {
+      if (LEADERS.contains(approver)) {
+        leaderApprovers.add(approver);
+      } else {
+        regularApprovers.add(approver);
+      }
+    }
+
+    // 领导按预定义顺序排列，普通员工按字母顺序排列
+    leaderApprovers.sort((a, b) => LEADERS.indexOf(a).compareTo(LEADERS.indexOf(b)));
+    regularApprovers.sort();
+
+    // 合并结果：领导在前，普通员工在后
+    _displayApprovers = [...leaderApprovers, ...regularApprovers];
   }
 
   // 获取项目审核人交集
@@ -448,6 +481,13 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     );
   }
 
+  /// 通用发布方法
+  /// [apiPath] API路径，如 '/wms/publish'
+  /// [requestData] 请求数据
+  Future<bool> _publish(String apiPath, Map<String, dynamic> requestData) async {
+    return await widget.jenkins.publish(apiPath, requestData, context);
+  }
+
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       // 验证必填字段
@@ -480,33 +520,22 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
         return;
       }
 
-      // 显示加载状态
-      showInfo('正在提交发布请求...');
+      // 构造请求数据
+      final requestData = {
+        'countries': _selectedCountries,
+        'op_type': _selectedOpTypes,
+        'projects': _selectedProjects,
+        'env': _env,
+        'branch': _branch,
+        'ct_branch': _ctBranch,
+        'approver': _getEnglishNameByChinese(_approver), // 提交英文名
+      };
 
-      try {
-        // 调用后端API进行发布
-        // 这里需要根据实际API接口调整
-        final response = await widget.jenkins.dio.post(
-          '${widget.jenkins.url}/wms/publish', // 假设的API路径
-          data: {
-            'countries': _selectedCountries,
-            'op_type': _selectedOpTypes,
-            'projects': _selectedProjects,
-            'env': _env,
-            'branch': _branch,
-            'ct_branch': _ctBranch,
-            'approver': _getEnglishNameByChinese(_approver), // 提交英文名
-          },
-        );
+      // 调用通用发布方法
+      bool success = await _publish('/open/build_wms', requestData);
 
-        if (response.statusCode == 200) {
-          showSucc('发布请求提交成功');
-          Navigator.pop(context); // 返回上一页
-        } else {
-          showError('发布请求提交失败');
-        }
-      } catch (e) {
-        showError('发布请求提交失败: ${e.toString()}');
+      if (success) {
+        Navigator.pop(context); // 返回上一页
       }
     }
   }

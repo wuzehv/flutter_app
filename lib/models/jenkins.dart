@@ -206,6 +206,35 @@ class JenkinsModel {
       rethrow;
     }
   }
+  
+  /// 通用发布方法
+  /// [apiPath] API路径，如 '/wms/publish'
+  /// [requestData] 请求数据
+  /// [context] BuildContext用于显示提示信息
+  Future<bool> publish(String apiPath, Map<String, dynamic> requestData, BuildContext context) async {
+    try {
+      // 显示加载状态
+      showInfo('正在提交发布请求...');
+      
+      final response = await _getDio().post('$url$apiPath', data: requestData);
+      
+      // 根据code判断成功失败
+      if (response.data != null && response.data['code'] == 0) {
+        showSucc('发布请求提交成功');
+        return true;
+      } else {
+        // 失败时显示message提示
+        String errorMessage = response.data != null && response.data['message'] != null 
+            ? response.data['message'] 
+            : '发布请求提交失败';
+        showError(errorMessage);
+        return false;
+      }
+    } catch (e) {
+      showError('发布请求提交失败: ${e.toString()}');
+      return false;
+    }
+  }
 
   Future<void> toLogPage(BuildContext context, String name, [bool fromList = true]) async {
     // final loader = context.read<LoadingProvider>();
