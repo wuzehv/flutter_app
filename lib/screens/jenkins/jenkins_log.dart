@@ -27,6 +27,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
   Timer? _countdownTimer; // 倒计时定时器
   bool _isAutoRefreshing = false; // 自动刷新状态
   int _secondsUntilRefresh = _AUTO_REFRESH_INTERVAL; // 距离下次刷新的秒数
+  bool _isLoading = true; // 默认显示加载状态
 
   @override
   void initState() {
@@ -46,10 +47,24 @@ class _JenkinsLogState extends State<JenkinsLog> {
   }
 
   Future<void> _loadLogs() async {
-    final logs = await widget.jenkins.getBuildList(_selectedFilter); // 使用_getSelectedFilter作为项目名称参数
     setState(() {
-      _logList = logs.cast<Map<String, dynamic>>();
+      _isLoading = true;
     });
+    
+    try {
+      final logs = await widget.jenkins.getBuildList(_selectedFilter);
+      setState(() {
+        _logList = logs.cast<Map<String, dynamic>>();
+      });
+    } catch (e) {
+      // 静默处理错误
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   // 启动自动刷新
@@ -178,33 +193,74 @@ class _JenkinsLogState extends State<JenkinsLog> {
           ),
           // 发布历史列表
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                try {
-                  await _loadLogs();
-                } catch (e) {
-                  // 静默处理手动刷新错误
-                }
-              },
-              child: ListView.builder(
-                itemCount: _logList.length,
-                itemBuilder: (context, index) {
-                  final item = _logList[index];
-                  return PendingApprovalItem(
-                    item: item,
-                    currentUser: widget.jenkins.user,
-                    onReject: () {
-                      // 调用审核拒绝接口
-                      widget.jenkins.abortBuild(item["id"]);
+            child: _isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                          strokeWidth: 3,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          '加载中...',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      try {
+                        await _loadLogs();
+                      } catch (e) {
+                        // 静默处理手动刷新错误
+                      }
                     },
-                    onApprove: () {
-                      // 调用审核通过接口
-                      widget.jenkins.proceedBuild(item["id"]);
-                    },
-                  );
-                },
-              ),
-            ),
+                    child: _logList.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.inbox_outlined,
+                                  size: 60,
+                                  color: Colors.grey[400],
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  '暂无构建记录',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _logList.length,
+                            itemBuilder: (context, index) {
+                              final item = _logList[index];
+                              return PendingApprovalItem(
+                                item: item,
+                                currentUser: widget.jenkins.user,
+                                onReject: () {
+                                  // 调用审核拒绝接口
+                                  widget.jenkins.abortBuild(item["id"]);
+                                },
+                                onApprove: () {
+                                  // 调用审核通过接口
+                                  widget.jenkins.proceedBuild(item["id"]);
+                                },
+                              );
+                            },
+                          ),
+                  ),
           ),
         ],
       ),

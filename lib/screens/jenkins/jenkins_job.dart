@@ -133,6 +133,29 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
           // 待你审核 Tab
           Consumer<JenkinsJobProvider>(
             builder: (context, provider, child) {
+              // 显示加载动画
+              if (provider.isLoading) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        strokeWidth: 3,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        '加载中...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
               if (provider.pendingApprovalCount == 0) {
                 return RefreshIndicator(
                   onRefresh: () async {

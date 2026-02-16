@@ -309,6 +309,14 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
 
   final Map<String, bool> _expanded = {};
   int _pendingApprovalCount = 0;
+  bool _isLoading = true; // 初始化时显示加载状态
+  
+  bool get isLoading => _isLoading;
+  
+  set isLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
 
   bool isExpanded(String jobName) => _expanded[jobName] ?? false;
 
@@ -336,6 +344,9 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
 
   Future<void> fetchPendingApproval() async {
     if (_currentJenkins == null) return;
+    
+    isLoading = true;
+    
     try {
       final response = await _currentJenkins?.getPendingList();
       pendingList = response!;
@@ -346,6 +357,8 @@ class JenkinsJobProvider extends ChangeNotifier with JenkinsSetter<JenkinsJobPro
       pendingApprovalCount = 0;
       notifyListeners();
       rethrow;
+    } finally {
+      isLoading = false;
     }
   }
 
