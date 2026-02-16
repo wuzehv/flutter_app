@@ -216,7 +216,7 @@ class JenkinsModel {
       // 显示加载状态
       showInfo('正在提交发布请求...');
       
-      final response = await _getDio().post('$url$apiPath', data: requestData);
+      final response = await _getDio().post('$JENKINS_BASE_URL$apiPath', data: requestData);
       
       // 根据code判断成功失败
       if (response.data != null && response.data['code'] == 0) {

@@ -23,6 +23,9 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     
+    // 监听tab切换事件
+    _tabController.addListener(_handleTabChange);
+    
     // 初始化时获取待审核数据
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -31,6 +34,21 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
         // 错误处理
       }
     });
+  }
+  
+  // 处理tab切换事件
+  void _handleTabChange() {
+    // 当切换到待审核tab时（index为1）
+    if (_tabController.index == 1) {
+      // 延迟一小段时间执行，确保tab切换完成
+      Future.microtask(() async {
+        try {
+          await context.read<JenkinsJobProvider>().fetchPendingApproval();
+        } catch (e) {
+          // 静默处理错误
+        }
+      });
+    }
   }
 
   @override
