@@ -75,6 +75,9 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
         if (_sortedApprovers.isNotEmpty) {
           _approver = _sortedApprovers[0];
         }
+        
+        // 客户列表默认全选
+        _selectedCustomers = List.from(_customers);
       });
     } catch (e) {
       showError('获取构建参数失败: ${e.toString()}');
@@ -282,34 +285,30 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
         return;
       }
 
-      // 显示加载状态
-      showInfo('正在提交发布请求...');
-      
-      try {
-        // 调用后端API进行发布
-        // 这里需要根据实际API接口调整
-        final response = await widget.jenkins.dio.post(
-          '${widget.jenkins.url}/shipla/publish', // Shipla的API路径
-          data: {
-            'op_type': _selectedOpTypes,
-            'projects': _selectedProjects,
-            'customers': _selectedCustomers,
-            'env': _env,
-            'branch': _branch,
-            'ct_branch': _ctBranch,
-            'approver': _approver,
-          },
-        );
-        
-        if (response.statusCode == 200) {
-          showSucc('发布请求提交成功');
-          Navigator.pop(context); // 返回上一页
-        } else {
-          showError('发布请求提交失败');
-        }
-      } catch (e) {
-        showError('发布请求提交失败: ${e.toString()}');
+      // 构造请求数据
+      final requestData = {
+        'op_type': _selectedOpTypes,
+        'projects': _selectedProjects,
+        'customers': _selectedCustomers,
+        'env': _env,
+        'branch': _branch,
+        'ct_branch': _ctBranch,
+        'approver': _approver,
+      };
+
+      // 调用通用发布方法
+      bool success = await _publish('/open/build_shipla', requestData);
+
+      if (success) {
+        Navigator.pop(context); // 返回上一页
       }
     }
+  }
+
+  /// 通用发布方法
+  /// [apiPath] API路径，如 '/shipla/publish'
+  /// [requestData] 请求数据
+  Future<bool> _publish(String apiPath, Map<String, dynamic> requestData) async {
+    return await widget.jenkins.publish(apiPath, requestData, context);
   }
 }
