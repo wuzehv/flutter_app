@@ -218,22 +218,134 @@ class JenkinsModel {
       
       final response = await _getDio().post('$JENKINS_BASE_URL$apiPath', data: requestData);
       
-      // 根据code判断成功失败
-      if (response.data != null && response.data['code'] == 0) {
+      // 检查响应数据是否存在
+      if (response.data == null) {
+        showError('服务器响应数据为空');
+        return false;
+      }
+      
+      final responseData = response.data;
+      
+      // 检查data字段是否存在
+      if (responseData['data'] == null) {
+        showError('响应数据格式错误：缺少data字段');
+        return false;
+      }
+      
+      final data = responseData['data'];
+      
+      // 根据success字段判断成功失败
+      if (data['success'] == true) {
         showSucc('发布请求提交成功');
         return true;
       } else {
-        // 失败时显示message提示
-        String errorMessage = response.data != null && response.data['message'] != null 
-            ? response.data['message'] 
-            : '发布请求提交失败';
-        showError(errorMessage);
+        // 失败时处理detail字段
+        List<String> detailList = [];
+        if (data['detail'] != null) {
+          if (data['detail'] is List) {
+            detailList = List<String>.from(data['detail']);
+          } else if (data['detail'] is String) {
+            detailList = [data['detail']];
+          }
+        }
+        
+        // 显示失败详情弹窗
+        _showFailureDialog(context, detailList);
         return false;
       }
     } catch (e) {
       showError('发布请求提交失败: ${e.toString()}');
       return false;
     }
+  }
+  
+  /// 显示发布失败详情弹窗
+  /// [context] BuildContext
+  /// [details] 失败详情列表
+  void _showFailureDialog(BuildContext context, List<String> details) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 不允许点击背景关闭
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red[700]),
+              SizedBox(width: 8),
+              Text('发布失败详情', style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '共 ${details.length} 个项目发布失败：', 
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)
+                ),
+                SizedBox(height: 12),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: ListView.builder(
+                      padding: EdgeInsets.all(8),
+                      itemCount: details.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 20,
+                                alignment: Alignment.topCenter,
+                                child: Text(
+                                  '${index + 1}.', 
+                                  style: TextStyle(
+                                    color: Colors.red[700], 
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  details[index],
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontSize: 14,
+                                    height: 1.3
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('确定'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> toLogPage(BuildContext context, String name, [bool fromList = true]) async {
