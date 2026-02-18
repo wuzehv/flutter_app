@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:jenkins_app/common/approver_utils.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/jenkins/widgets/choice_selector.dart';
 import 'package:provider/provider.dart';
@@ -19,19 +20,22 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
   final TextEditingController _branchController = TextEditingController();
   final TextEditingController _ctBranchController = TextEditingController();
   
-  // 对应Wms结构体的字段
-  List<String> _selectedOpTypes = [];
+  // 对应Shipla结构体的字段
+  List<String> _selectedOpTypes = ['web']; // 操作类型默认选中web
   List<String> _selectedProjects = [];
+  List<String> _selectedCustomers = [];
   String _env = 'pro'; // 环境默认选中pro
   String _branch = 'master'; // PHP分支根据环境智能填充
   String _ctBranch = 'master'; // GO分支默认填充master
-  String _approver = '';
+  String _approver = ''; // 审核人将在数据加载后设置为第一个
   
   // 动态获取的数据
   List<String> _opTypes = ['web', 'ct']; // 操作类型固定值
   List<String> _projects = [];
+  List<String> _customers = [];
   List<String> _envs = ['pro']; // 环境选项保持不变
   List<String> _approvers = []; // 从API获取审核人列表
+  List<String> _sortedApprovers = []; // 排序后的审核人列表
 
   @override
   void initState() {
@@ -58,11 +62,18 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
         // 从API响应中提取数据
         // _opTypes = List<String>.from(data['op_types'] ?? []); // 操作类型使用固定值
         _projects = List<String>.from(data['projects'] ?? []);
+        _customers = List<String>.from(data['customers'] ?? []);
         _approvers = List<String>.from(data['approvers'] ?? []);
         
+        // 对审核人进行排序（领导置顶）
+        _sortedApprovers = ApproverUtils.sortApproversWithLeadersFirst(
+          _approvers, 
+          ApproverUtils.DEFAULT_LEADERS
+        );
+        
         // 设置默认审核人
-        if (_approvers.isNotEmpty) {
-          _approver = _approvers[0];
+        if (_sortedApprovers.isNotEmpty) {
+          _approver = _sortedApprovers[0];
         }
       });
     } catch (e) {
@@ -134,8 +145,29 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
                       } else {
                         _selectedProjects.add(project);
                       }
-                      // 项目选择变化时重新加载构建参数
-                      _loadBuildParams();
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+
+                // 客户列表选择
+                ChoiceSelector(
+                  title: '客户列表',
+                  options: _customers,
+                  selectedValues: _selectedCustomers,
+                  showSelectAll: true, // 启用全选功能
+                  onSelectionChanged: (customer) {
+                    setState(() {
+                      if (_selectedCustomers.contains(customer)) {
+                        _selectedCustomers.remove(customer);
+                      } else {
+                        _selectedCustomers.add(customer);
+                      }
+                    });
+                  },
+                  onSelectAll: (selectedCustomers) {
+                    setState(() {
+                      _selectedCustomers = selectedCustomers;
                     });
                   },
                 ),
@@ -188,7 +220,7 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
                 // 审核人选择（改为复选样式）
                 ChoiceSelector(
                   title: '审核人',
-                  options: _approvers,
+                  options: _sortedApprovers,
                   selectedValues: [], // 多选模式下使用
                   selectedValue: _approver, // 单选模式下使用
                   isMultiSelect: false, // 单选模式
@@ -229,6 +261,10 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
         showError('请选择项目列表');
         return;
       }
+      if (_selectedCustomers.isEmpty) {
+        showError('请选择客户列表');
+        return;
+      }
       if (_env.isEmpty) {
         showError('请选择环境');
         return;
@@ -257,6 +293,7 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
           data: {
             'op_type': _selectedOpTypes,
             'projects': _selectedProjects,
+            'customers': _selectedCustomers,
             'env': _env,
             'branch': _branch,
             'ct_branch': _ctBranch,

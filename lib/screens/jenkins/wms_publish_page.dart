@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:jenkins_app/common/approver_utils.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/jenkins/widgets/choice_selector.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +22,7 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
 
   // 对应Wms结构体的字段
   List<String> _selectedCountries = [];
-  List<String> _selectedOpTypes = [];
+  List<String> _selectedOpTypes = ['web']; // 操作类型默认选中web
   List<String> _selectedProjects = [];
   String _env = 'pro'; // 环境默认选中pro
   String _branch = 'master'; // PHP分支根据环境智能填充
@@ -105,10 +106,8 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
         // 计算符合条件的审核人
         _calculateQualifiedApprovers();
 
-        // 设置默认审核人
-        if (_approvers.isNotEmpty) {
-          _approver = _approvers[0];
-        }
+        // 注意：此时_selectedProjects为空，所以_displayApprovers也为空
+        // 默认审核人将在用户选择项目后设置
       });
     } catch (e) {
       showError('获取构建参数失败: ${e.toString()}');
@@ -151,6 +150,11 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
 
     // 将领导置顶显示
     _sortApproversWithLeadersFirst();
+    
+    // 如果有可用审核人且还未设置默认审核人，则选中第一个
+    if (_displayApprovers.isNotEmpty && _approver.isEmpty) {
+      _approver = _displayApprovers[0];
+    }
   }
 
   // 判断是否只选择了k8s国家
@@ -170,34 +174,12 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     return true; // 所有选择的国家都是k8s国家
   }
 
-  static const List<String> LEADERS = ['张俊兴'];
-
   // 将领导置顶排序
   void _sortApproversWithLeadersFirst() {
-    // 如果没有配置领导，则保持原有排序
-    if (LEADERS.isEmpty) {
-      _displayApprovers.sort();
-      return;
-    }
-
-    // 分离领导和普通员工
-    final leaderApprovers = <String>[];
-    final regularApprovers = <String>[];
-
-    for (String approver in _displayApprovers) {
-      if (LEADERS.contains(approver)) {
-        leaderApprovers.add(approver);
-      } else {
-        regularApprovers.add(approver);
-      }
-    }
-
-    // 领导按预定义顺序排列，普通员工按字母顺序排列
-    leaderApprovers.sort((a, b) => LEADERS.indexOf(a).compareTo(LEADERS.indexOf(b)));
-    regularApprovers.sort();
-
-    // 合并结果：领导在前，普通员工在后
-    _displayApprovers = [...leaderApprovers, ...regularApprovers];
+    _displayApprovers = ApproverUtils.sortApproversWithLeadersFirst(
+      _displayApprovers, 
+      ApproverUtils.DEFAULT_LEADERS
+    );
   }
 
   // 获取项目审核人交集
