@@ -46,20 +46,25 @@ class _JenkinsLogState extends State<JenkinsLog> {
     });
   }
 
-  Future<void> _loadLogs() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loadLogs([bool isAutoRefresh = false]) async {
+    // 自动刷新时不显示loading状态，避免闪屏
+    if (!isAutoRefresh) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
     
     try {
       final logs = await widget.jenkins.getBuildList(_selectedFilter);
-      setState(() {
-        _logList = logs.cast<Map<String, dynamic>>();
-      });
+      if (mounted) {
+        setState(() {
+          _logList = logs.cast<Map<String, dynamic>>();
+        });
+      }
     } catch (e) {
       // 静默处理错误
     } finally {
-      if (mounted) {
+      if (mounted && !isAutoRefresh) {
         setState(() {
           _isLoading = false;
         });
@@ -80,7 +85,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
         });
 
         try {
-          await _loadLogs();
+          await _loadLogs(true); // 传入true表示是自动刷新
           // 重新启动倒计时
           _startCountdown();
         } catch (e) {
@@ -158,7 +163,7 @@ class _JenkinsLogState extends State<JenkinsLog> {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.yellow),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                 ),
               ),
             ),
