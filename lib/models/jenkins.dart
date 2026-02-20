@@ -3,12 +3,10 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:jenkins_app/common/config.dart';
 import 'package:jenkins_app/common/jenkins_global.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
-
-// Jenkins API 基础URL常量
-const String JENKINS_BASE_URL = 'http://192.168.18.4:8989';
 
 class JenkinsModel {
   late String? id;
@@ -51,23 +49,23 @@ class JenkinsModel {
   }
 
   Future<List<Map<String, dynamic>>> getJobList() async {
-    final response = await _getDio().get('$JENKINS_BASE_URL/open/projects');
+    final response = await _getDio().get('${Config.JENKINS_URL}/open/projects');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getPendingList() async {
-    final response = await _getDio().get('$JENKINS_BASE_URL/open/pending?user=$user');
+    final response = await _getDio().get('${Config.JENKINS_URL}/open/pending?user=$user');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<List<Map<String, dynamic>>> getBuildList(String project) async {
-    final response = await _getDio().get('$JENKINS_BASE_URL/open/builds?project=$project');
+    final response = await _getDio().get('${Config.JENKINS_URL}/open/builds?project=$project');
     return List<Map<String, dynamic>>.from(response.data['data']['data'].map((e) => Map<String, dynamic>.from(e)));
   }
 
   Future<void> proceedBuild(int id) async {
     try {
-      await _getDio().post('$JENKINS_BASE_URL/open/proceed?id=$id');
+      await _getDio().post('${Config.JENKINS_URL}/open/proceed?id=$id');
       showSucc('已通过');
     } catch (e) {
       showError('操作失败，请检查任务');
@@ -76,7 +74,7 @@ class JenkinsModel {
 
   Future<void> abortBuild(int id) async {
     try {
-      await _getDio().post('$JENKINS_BASE_URL/open/abort?id=$id');
+      await _getDio().post('${Config.JENKINS_URL}/open/abort?id=$id');
       showSucc('已拒绝');
     } catch (e) {
       showError('操作失败，请检查任务');
@@ -192,7 +190,7 @@ class JenkinsModel {
   // 获取构建参数的通用方法
   Future<Map<String, dynamic>> getBuildParams(String projectName) async {
     try {
-      final response = await _getDio().get('$JENKINS_BASE_URL/open/build_params?project=$projectName');
+      final response = await _getDio().get('${Config.JENKINS_URL}/open/build_params?project=$projectName');
 
       if (response.statusCode == 200) {
         // 直接返回需要的数据结构
@@ -215,8 +213,8 @@ class JenkinsModel {
     try {
       // 显示加载状态
       showInfo('正在提交发布请求...');
-      
-      final response = await _getDio().post('$JENKINS_BASE_URL$apiPath', data: requestData);
+
+      final response = await _getDio().post('${Config.JENKINS_URL}$apiPath', data: requestData);
       
       // 检查响应数据是否存在
       if (response.data == null) {

@@ -10,6 +10,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/home_bottom.dart';
 import 'package:jenkins_app/common/util.dart';
+import 'package:jenkins_app/common/config.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_item.dart';
 import 'package:jenkins_app/screens/left_drawer.dart';
@@ -24,13 +25,14 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final String _upgrade = 'http://192.168.5.60:10000';
+  late String _upgrade;
 
   final ValueNotifier<double> _progressNotifier = ValueNotifier(0);
 
   @override
   void initState() {
     super.initState();
+    _upgrade = Config.UPGRADE_URL;
     _loadList();
     if (Platform.isAndroid) {
       _initUpdateListener();
