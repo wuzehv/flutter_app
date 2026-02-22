@@ -274,6 +274,14 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     return _scmApproversMap[chineseName] ?? _bossApproversMap[chineseName] ?? _wmsApproversMap[chineseName] ?? '';
   }
 
+  // 过滤已选国家，移除在当前环境下不可用的国家
+  void _filterSelectedCountriesForCurrentEnv() {
+    List<String> currentAvailableCountries = _getFilteredCountries();
+    _selectedCountries = _selectedCountries.where((country) {
+      return currentAvailableCountries.contains(country);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -305,6 +313,8 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
                       } else if (env == 'pro') {
                         _branch = 'master';
                       }
+                      // 环境变化时，过滤掉在新环境下不存在的已选国家
+                      _filterSelectedCountriesForCurrentEnv();
                       // 环境变化时重新计算审核人
                       _calculateQualifiedApprovers();
                       // 同时更新控制器
