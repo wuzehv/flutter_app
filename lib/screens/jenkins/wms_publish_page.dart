@@ -15,6 +15,13 @@ class WmsPublishPage extends StatefulWidget {
   State<WmsPublishPage> createState() => _WmsPublishPageState();
 }
 
+// 国家选择类型枚举
+class CountrySelectionType {
+  static const onlyK8s = 'onlyK8s';      // 只选择k8s国家
+  static const onlyNonK8s = 'onlyNonK8s'; // 只选择非k8s国家
+  static const mixed = 'mixed';           // 混合选择k8s和非k8s国家
+}
+
 class _WmsPublishPageState extends State<WmsPublishPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _branchController = TextEditingController();
@@ -125,15 +132,24 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     Set<String> qualifiedApprovers = <String>{};
     Set<String> displayApproversSet = <String>{};
 
-    // 判断是否只选择了k8s国家
-    bool isOnlyK8sCountries = _isOnlyK8sCountriesSelected();
+    // 分析国家选择情况
+    String selectionType = _analyzeCountrySelection();
 
-    if (isOnlyK8sCountries) {
-      // 只选择k8s国家的情况：使用wms_approvers
-      qualifiedApprovers = Set.from(_wmsApproversMap.values);
-    } else {
-      // 其他情况：显示项目审核人的交集
-      qualifiedApprovers = _getProjectApproverIntersection();
+    switch (selectionType) {
+      case CountrySelectionType.onlyK8s:
+        // 只选择k8s国家：使用wms_approvers
+        qualifiedApprovers = Set.from(_wmsApproversMap.values);
+        break;
+      case CountrySelectionType.onlyNonK8s:
+        // 只选择非k8s国家：使用项目审核人交集
+        qualifiedApprovers = _getProjectApproverIntersection();
+        break;
+      case CountrySelectionType.mixed:
+        // 混合选择：取wms_approvers和项目审核人交集的交集
+        Set<String> k8sApprovers = Set.from(_wmsApproversMap.values);
+        Set<String> projectApprovers = _getProjectApproverIntersection();
+        qualifiedApprovers = k8sApprovers.intersection(projectApprovers);
+        break;
     }
 
     // 获取对应的中文显示名称
@@ -157,21 +173,33 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
     }
   }
 
-  // 判断是否只选择了k8s国家
-  bool _isOnlyK8sCountriesSelected() {
-    if (_selectedCountries.isEmpty) return false;
+  // 分析国家选择类型
+  String _analyzeCountrySelection() {
+    if (_selectedCountries.isEmpty) return CountrySelectionType.onlyNonK8s;
 
     // 获取当前环境的k8s国家列表
     Set<String> currentK8sCountries = _getK8sCountriesForCurrentEnv();
+    
+    bool hasK8sCountry = false;
+    bool hasNonK8sCountry = false;
 
-    // 检查所选国家是否都在k8s国家列表中
+    // 分析所选国家的类型
     for (String country in _selectedCountries) {
-      if (!currentK8sCountries.contains(country)) {
-        return false; // 发现非k8s国家
+      if (currentK8sCountries.contains(country)) {
+        hasK8sCountry = true;
+      } else {
+        hasNonK8sCountry = true;
       }
     }
 
-    return true; // 所有选择的国家都是k8s国家
+    // 根据分析结果返回相应的类型
+    if (hasK8sCountry && !hasNonK8sCountry) {
+      return CountrySelectionType.onlyK8s;
+    } else if (!hasK8sCountry && hasNonK8sCountry) {
+      return CountrySelectionType.onlyNonK8s;
+    } else {
+      return CountrySelectionType.mixed;
+    }
   }
 
   // 将领导置顶排序
