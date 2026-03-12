@@ -15,7 +15,6 @@ class JenkinsConfig extends StatefulWidget {
 }
 
 class _JenkinsConfigState extends State<JenkinsConfig> {
-  final TextEditingController _urlController = TextEditingController();
   final TextEditingController _remarkController = TextEditingController();
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
@@ -26,7 +25,6 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
   Widget build(BuildContext context) {
     final jenkins = widget.jenkins;
     if (jenkins != null) {
-      _urlController.text = jenkins.url;
       _remarkController.text = jenkins.remark;
       _userController.text = jenkins.user;
       _tokenController.text = jenkins.token;
@@ -40,15 +38,6 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           children: <Widget>[
-            TextFormField(
-              autofocus: true,
-              controller: _urlController,
-              decoration: InputDecoration(labelText: "地址", hintText: "jenkins服务地址", prefixIcon: Icon(Icons.link)),
-              validator: (v) {
-                final uri = Uri.tryParse(v ?? '');
-                return (uri == null || uri.host.isEmpty || uri.scheme.isEmpty) ? 'url不合法' : null;
-              },
-            ),
             TextFormField(
               controller: _userController,
               decoration: InputDecoration(labelText: "用户名", hintText: "jenkins登录用户名", prefixIcon: Icon(Icons.person)),
@@ -76,7 +65,7 @@ class _JenkinsConfigState extends State<JenkinsConfig> {
                         if ((_formKey.currentState as FormState).validate()) {
                           var j = JenkinsModel(
                             remark: _remarkController.text.trim(),
-                            url: trimEndingChars(_urlController.text, "/ "),
+                            url: '',
                             user: _userController.text.trim(),
                             token: _tokenController.text.trim(),
                             id: _id,

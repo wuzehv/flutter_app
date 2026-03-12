@@ -45,7 +45,7 @@ class _JenkinsItemState extends State<JenkinsItem> {
       child: ListTile(
         title: Text(widget.jenkins.remark, style: TextStyle(fontSize: 18.0)),
         subtitle: Text(
-          widget.jenkins.url,
+          widget.jenkins.user,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: Colors.grey, fontSize: 13.5),
         ),

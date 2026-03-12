@@ -19,7 +19,7 @@ class JenkinsModel {
 
   Dio get dio => _dio!;
 
-  JenkinsModel({required this.remark, required this.url, required this.user, required this.token, this.id});
+  JenkinsModel({required this.remark, this.url = '', required this.user, required this.token, this.id});
 
   Map<String, dynamic> toJson() {
     return {'id': id, 'remark': remark, 'url': url, 'user': user, 'token': token};
