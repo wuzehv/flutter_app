@@ -111,7 +111,7 @@ class CodeUpModel {
     }
   }
 
-  Future<void> okMr(BuildContext context, int projectId, int localId) async {
+  Future<Map<String, dynamic>?> okMr(BuildContext context, int projectId, int localId) async {
     final jsonString = jsonEncode({"mergeMessage": "", "mergeType": "no-fast-forward", "removeSourceBranch": false});
     final loader = context.read<LoadingProvider>();
     loader.show();
@@ -122,12 +122,19 @@ class CodeUpModel {
       );
       if (response.data['status'] == 'MERGED') {
         showSucc('合并成功');
+        // 返回合并结果和目标分支
+        return {
+          'success': true,
+          'targetBranch': response.data['targetBranch'],
+          'sourceBranch': response.data['sourceBranch'],
+        };
       } else {
         showError('合并失败，请检查状态');
+        return {'success': false};
       }
     } catch (e) {
       showError('请求失败，请检查网络和配置信息');
-      rethrow;
+      return {'success': false};
     } finally {
       loader.hide();
     }

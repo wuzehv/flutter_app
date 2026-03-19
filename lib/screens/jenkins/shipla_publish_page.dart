@@ -8,8 +8,14 @@ import 'package:provider/provider.dart';
 class ShiplaPublishPage extends StatefulWidget {
   final JenkinsModel jenkins;
   final String projectName;
+  final String? initialBranch;
 
-  const ShiplaPublishPage({super.key, required this.jenkins, required this.projectName});
+  const ShiplaPublishPage({
+    super.key,
+    required this.jenkins,
+    required this.projectName,
+    this.initialBranch,
+  });
 
   @override
   State<ShiplaPublishPage> createState() => _ShiplaPublishPageState();
@@ -40,6 +46,11 @@ class _ShiplaPublishPageState extends State<ShiplaPublishPage> {
   @override
   void initState() {
     super.initState();
+    // 如果有传入的初始分支，使用它
+    if (widget.initialBranch != null && widget.initialBranch!.isNotEmpty) {
+      _branch = widget.initialBranch!;
+      _ctBranch = widget.initialBranch!;
+    }
     // 初始化控制器值
     _branchController.text = _branch;
     _ctBranchController.text = _ctBranch;

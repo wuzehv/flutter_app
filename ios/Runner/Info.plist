@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Face ID / Touch ID 权限描述 -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>需要使用生物识别验证身份以保护应用安全</string>
 </dict>
 </plist>

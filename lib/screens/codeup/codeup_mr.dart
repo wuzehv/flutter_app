@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/models/codeup.dart';
+import 'package:jenkins_app/models/jenkins.dart';
+import 'package:provider/provider.dart';
+
+import '../../common/util.dart';
 
 class CodeUpMr extends StatefulWidget {
   final CodeUpModel codeup;
@@ -41,6 +45,206 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
     setState(() {
       _itemsMap[status] = pageItems;
     });
+  }
+
+  /// 显示发布确认弹窗
+  void _showPublishConfirmDialog(String? targetBranch) async {
+    // 获取可用的 Jenkins 配置
+    final jenkinsProvider = context.read<JenkinsProvider>();
+    final jenkinsList = jenkinsProvider.items;
+
+    if (jenkinsList.isEmpty) {
+      // 没有配置 Jenkins，提示用户
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('提示'),
+          content: Text('未配置 Jenkins，无法跳转发布页面'),
+          actions: [
+            TextButton(onPressed: () => context.pop(), child: Text('确定')),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // 显示二次确认弹窗
+    final shouldPublish = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('合并成功'),
+        content: Text('是否跳转到发布页面？'),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(false),
+            child: Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => context.pop(true),
+            child: Text('确认', style: TextStyle(color: Colors.green)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldPublish == true && context.mounted) {
+      // 选择发布类型和 Jenkins 配置
+      _showPublishTypeSelector(jenkinsList, targetBranch);
+    }
+  }
+
+  /// 显示发布类型选择弹窗
+  void _showPublishTypeSelector(List<dynamic> jenkinsList, String? targetBranch) async {
+    // 默认选择第一个 Jenkins 配置
+    JenkinsModel? selectedJenkins;
+    String? selectedProjectName;
+    String? selectedPublishType; // 'wms' 或 'shipla'
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('选择发布配置'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 发布类型选择
+                  Text('发布类型:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ChoiceChip(
+                        label: Text('WMS'),
+                        selected: selectedPublishType == 'wms',
+                        onSelected: (selected) {
+                          setDialogState(() {
+                            selectedPublishType = selected ? 'wms' : null;
+                          });
+                        },
+                      ),
+                      SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text('Shipla'),
+                        selected: selectedPublishType == 'shipla',
+                        onSelected: (selected) {
+                          setDialogState(() {
+                            selectedPublishType = selected ? 'shipla' : null;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  // Jenkins 配置选择
+                  Text('Jenkins 配置:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  ...jenkinsList.map((jenkins) {
+                    return RadioListTile<JenkinsModel>(
+                      title: Text(jenkins.remark),
+                      subtitle: Text(jenkins.url),
+                      value: jenkins,
+                      groupValue: selectedJenkins,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          selectedJenkins = value;
+                          selectedProjectName = null; // 重置项目选择
+                        });
+                      },
+                    );
+                  }).toList(),
+                  // 项目选择（选择 Jenkins 后显示）
+                  if (selectedJenkins != null) ...[
+                    SizedBox(height: 16),
+                    Text('项目名称:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    FutureBuilder(
+                      future: selectedJenkins!.getJobList(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return Text('加载失败: ${snapshot.error}', style: TextStyle(color: Colors.red));
+                        }
+                        final projects = snapshot.data ?? [];
+                        if (projects.isEmpty) {
+                          return Text('该项目没有可用发布');
+                        }
+                        return Column(
+                          children: projects.map((project) {
+                            return RadioListTile<String>(
+                              title: Text(project['name']),
+                              value: project['name'],
+                              groupValue: selectedProjectName,
+                              onChanged: (value) {
+                                setDialogState(() {
+                                  selectedProjectName = value;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (selectedPublishType == null) {
+                      showError('请选择发布类型');
+                      return;
+                    }
+                    if (selectedJenkins == null) {
+                      showError('请选择 Jenkins 配置');
+                      return;
+                    }
+                    if (selectedProjectName == null) {
+                      showError('请选择项目');
+                      return;
+                    }
+                    context.pop();
+                  },
+                  child: Text('确定', style: TextStyle(color: Colors.green)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    // 跳转到发布页面
+    if (selectedJenkins != null && selectedProjectName != null && selectedPublishType != null && context.mounted) {
+      _navigateToPublishPage(selectedJenkins!, selectedProjectName!, selectedPublishType!, targetBranch);
+    }
+  }
+
+  /// 跳转到发布页面
+  void _navigateToPublishPage(
+    JenkinsModel jenkins,
+    String projectName,
+    String publishType,
+    String? targetBranch,
+  ) {
+    final path = publishType == 'wms' ? '/job/build_wms' : '/job/build_shipla';
+    context.push(
+      path,
+      extra: {
+        'obj': jenkins,
+        'name': projectName,
+        'targetBranch': targetBranch, // 传入目标分支
+      },
+    );
   }
 
   @override
@@ -132,9 +336,14 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                                               TextButton(child: Text("取消"), onPressed: () => context.pop()),
                                               TextButton(
                                                 child: Text("确认"),
-                                                onPressed: () {
-                                                  widget.codeup.okMr(context, widget.codeup.curProjectId, items[index]['id']);
+                                                onPressed: () async {
+                                                  final result = await widget.codeup.okMr(context, widget.codeup.curProjectId, items[index]['id']);
                                                   context.pop();
+                                                  if (result != null && result['success'] == true) {
+                                                    // 合并成功，显示二次确认弹窗
+                                                    final targetBranch = result['targetBranch'] as String?;
+                                                    _showPublishConfirmDialog(targetBranch);
+                                                  }
                                                   _loadData(status);
                                                 },
                                               ),

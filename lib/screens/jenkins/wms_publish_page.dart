@@ -8,8 +8,14 @@ import 'package:provider/provider.dart';
 class WmsPublishPage extends StatefulWidget {
   final JenkinsModel jenkins;
   final String projectName;
+  final String? initialBranch;
 
-  const WmsPublishPage({super.key, required this.jenkins, required this.projectName});
+  const WmsPublishPage({
+    super.key,
+    required this.jenkins,
+    required this.projectName,
+    this.initialBranch,
+  });
 
   @override
   State<WmsPublishPage> createState() => _WmsPublishPageState();
@@ -68,6 +74,11 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
   @override
   void initState() {
     super.initState();
+    // 如果有传入的初始分支，使用它
+    if (widget.initialBranch != null && widget.initialBranch!.isNotEmpty) {
+      _branch = widget.initialBranch!;
+      _ctBranch = widget.initialBranch!;
+    }
     // 初始化控制器值
     _branchController.text = _branch;
     _ctBranchController.text = _ctBranch;
