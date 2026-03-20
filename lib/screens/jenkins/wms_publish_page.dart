@@ -74,10 +74,9 @@ class _WmsPublishPageState extends State<WmsPublishPage> {
   @override
   void initState() {
     super.initState();
-    // 如果有传入的初始分支，使用它
+    // 如果有传入的初始分支，只替换 PHP 分支
     if (widget.initialBranch != null && widget.initialBranch!.isNotEmpty) {
       _branch = widget.initialBranch!;
-      _ctBranch = widget.initialBranch!;
     }
     // 初始化控制器值
     _branchController.text = _branch;

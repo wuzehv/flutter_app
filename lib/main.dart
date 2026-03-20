@@ -8,6 +8,7 @@ import 'package:jenkins_app/common/biometric_overlay.dart';
 import 'package:jenkins_app/models/codeup.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/codeup/codeup.dart';
+import 'package:jenkins_app/screens/codeup/codeup_branches.dart';
 import 'package:jenkins_app/screens/codeup/codeup_config.dart';
 import 'package:jenkins_app/screens/codeup/codeup_mr.dart';
 import 'package:jenkins_app/screens/codeup/codeup_project.dart';
@@ -107,6 +108,10 @@ final GoRouter _router = GoRouter(
                     GoRoute(
                       path: 'mr',
                       builder: (BuildContext context, GoRouterState state) => CodeUpMr(codeup: state.extra as CodeUpModel),
+                    ),
+                    GoRoute(
+                      path: 'branches',
+                      builder: (BuildContext context, GoRouterState state) => CodeUpBranches(codeup: state.extra as CodeUpModel),
                     ),
                   ],
                 ),

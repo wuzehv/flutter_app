@@ -78,14 +78,42 @@ class _CodeUpProjectState extends State<CodeUpProject> {
                   ),
                   subtitle: Text(
                     (_items[index]['desc'] == null ? '' : _items[index]['desc'] + ' · ') + "更新于 ${_items[index]['update']}",
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
-                  trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () async {
-                    widget.codeup
-                      ..curProjectName = _items[index]['name']
-                      ..curProjectId = _items[index]['id'];
-                    context.push('/codeup/project/mr', extra: widget.codeup);
-                  },
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) {
+                      widget.codeup
+                        ..curProjectName = _items[index]['name']
+                        ..curProjectId = _items[index]['id'];
+                      if (value == 'mr') {
+                        context.push('/codeup/project/mr', extra: widget.codeup);
+                      } else if (value == 'branches') {
+                        context.push('/codeup/project/branches', extra: widget.codeup);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'mr',
+                        child: Row(
+                          children: [
+                            Icon(Icons.merge_type, size: 18, color: Colors.blue),
+                            SizedBox(width: 8),
+                            Text('合并请求'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'branches',
+                        child: Row(
+                          children: [
+                            Icon(Icons.call_split, size: 18, color: Colors.green),
+                            SizedBox(width: 8),
+                            Text('分支管理'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               } else {
                 return Padding(

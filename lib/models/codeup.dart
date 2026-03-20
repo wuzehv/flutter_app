@@ -157,6 +157,35 @@ class CodeUpModel {
       loader.hide();
     }
   }
+
+  /// 获取项目分支列表（最新修改的前10个）
+  /// [projectId] 项目ID
+  Future<List<Map<String, dynamic>>> getProjectBranches(int projectId) async {
+    try {
+      // 使用 API 直接排序：updated_desc 按更新时间降序（最新的在前）
+      final response = await _getDio().get(
+        '$url/$orgId/repositories/$projectId/branches?perPage=10&sort=updated_desc',
+      );
+      
+      final branches = List<Map<String, dynamic>>.from(
+        response.data.map(
+          (e) => {
+            'name': e['name'],
+            'commitId': e['commit']?['id'] ?? '',
+            'commitMessage': e['commit']?['message'] ?? e['commit']?['title'] ?? '',
+            'committer': e['commit']?['authorName'] ?? e['commit']?['committerName'] ?? '',
+            'updatedAt': e['commit']?['committedDate'] ?? e['commit']?['authoredDate'] ?? '',
+            'isProtected': e['protected'] ?? false,
+          },
+        ),
+      );
+      
+      return branches;
+    } catch (e) {
+      showError('获取分支列表失败，请检查网络和配置信息');
+      rethrow;
+    }
+  }
 }
 
 class CodeUpProvider extends ChangeNotifier {
