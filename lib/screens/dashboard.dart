@@ -8,7 +8,7 @@ import 'package:flutter_app_update/flutter_app_update.dart';
 import 'package:flutter_app_update/result_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/config.dart';
-import 'package:jenkins_app/common/home_bottom.dart';
+
 import 'package:jenkins_app/common/loading.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/models/codeup.dart';
@@ -155,7 +155,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
           ),
         ),
         drawer: const LeftDrawer(),
-        bottomNavigationBar: const HomeBottom(pageIdx: 0),
+
         body: RefreshIndicator(
           onRefresh: _loadData,
           child: SingleChildScrollView(
