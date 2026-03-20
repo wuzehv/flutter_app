@@ -145,7 +145,6 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                   ...jenkinsList.map((jenkins) {
                     return RadioListTile<JenkinsModel>(
                       title: Text(jenkins.remark),
-                      subtitle: Text(jenkins.url),
                       value: jenkins,
                       groupValue: selectedJenkins,
                       onChanged: (value) {

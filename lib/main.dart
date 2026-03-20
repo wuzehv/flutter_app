@@ -12,7 +12,7 @@ import 'package:jenkins_app/screens/codeup/codeup_branches.dart';
 import 'package:jenkins_app/screens/codeup/codeup_config.dart';
 import 'package:jenkins_app/screens/codeup/codeup_mr.dart';
 import 'package:jenkins_app/screens/codeup/codeup_project.dart';
-import 'package:jenkins_app/screens/home.dart';
+import 'package:jenkins_app/screens/dashboard.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_job.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_log.dart';
@@ -59,7 +59,7 @@ final GoRouter _router = GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          builder: (BuildContext context, GoRouterState state) => const Home(),
+          builder: (BuildContext context, GoRouterState state) => const Dashboard(),
           routes: <RouteBase>[
             GoRoute(
               path: 'job',
