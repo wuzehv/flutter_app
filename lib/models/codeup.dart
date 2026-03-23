@@ -99,6 +99,10 @@ class CodeUpModel {
             'created': formatChatTime(e['createdAt']),
             'title': e['title'],
             'state': e['state'],
+            // 尝试获取 patchSetId，如果接口返回的话
+            'sourcePatchSetBizId': e['sourcePatchSetBizId'],
+            'targetPatchSetBizId': e['targetPatchSetBizId'],
+            'patchSets': e['patchSets'],
           },
         ),
       );
@@ -155,6 +159,85 @@ class CodeUpModel {
       rethrow;
     } finally {
       loader.hide();
+    }
+  }
+
+  /// 获取合并请求详情（用于获取 patchSetId）
+  Future<Map<String, dynamic>?> getMrDetail(int projectId, int localId) async {
+    try {
+      final response = await _getDio().get(
+        '$url/$orgId/repositories/$projectId/changeRequests/$localId',
+      );
+      debugPrint('getMrDetail response: ${response.data}');
+      return response.data;
+    } catch (e) {
+      showError('获取合并请求详情失败: $e');
+      return null;
+    }
+  }
+
+  /// 获取合并请求版本列表（patches）
+  /// 返回包含 patchSetBizId 和 relatedMergeItemType 的列表
+  /// relatedMergeItemType: MERGE_SOURCE - 源分支, MERGE_TARGET - 目标分支
+  Future<List<Map<String, dynamic>>?> getMrPatchSets(int projectId, int localId) async {
+    try {
+      final response = await _getDio().get(
+        '$url/$orgId/repositories/$projectId/changeRequests/$localId/diffs/patches',
+      );
+      debugPrint('getMrPatchSets response: ${response.data}');
+      if (response.data is List) {
+        return List<Map<String, dynamic>>.from(
+          (response.data as List).map((e) => Map<String, dynamic>.from(e)),
+        );
+      }
+      return null;
+    } catch (e) {
+      showError('获取版本列表失败: $e');
+      return null;
+    }
+  }
+
+  /// 获取合并请求变更文件树
+  Future<Map<String, dynamic>?> getMrChangeTree(
+    int projectId,
+    int localId,
+    String fromPatchSetId,
+    String toPatchSetId,
+  ) async {
+    try {
+      final response = await _getDio().get(
+        '$url/$orgId/repositories/$projectId/changeRequests/$localId/diffs/changeTree?fromPatchSetId=$fromPatchSetId&toPatchSetId=$toPatchSetId',
+      );
+      return response.data;
+    } catch (e) {
+      showError('获取变更文件列表失败');
+      return null;
+    }
+  }
+
+  /// 比较两个 commit 获取 diff 内容
+  /// [from] 起始版本（commitId/分支名/标签名）- 对应旧版本
+  /// [to] 截止版本（commitId/分支名/标签名）- 对应新版本
+  Future<Map<String, dynamic>?> compareCommits(
+    int projectId,
+    String from,
+    String to, {
+    String? sourceType,
+    String? targetType,
+  }) async {
+    try {
+      var queryParams = 'from=$from&to=$to';
+      if (sourceType != null) queryParams += '&sourceType=$sourceType';
+      if (targetType != null) queryParams += '&targetType=$targetType';
+      
+      final response = await _getDio().get(
+        '$url/$orgId/repositories/$projectId/compares?$queryParams',
+      );
+      debugPrint('compareCommits response: ${response.data}');
+      return response.data;
+    } catch (e) {
+      showError('获取代码对比失败: $e');
+      return null;
     }
   }
 

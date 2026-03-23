@@ -247,27 +247,60 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: iconColor.withAlpha((0.15 * 255).toInt()),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: iconColor.withAlpha((0.1 * 255).toInt()),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: Icon(icon, color: iconColor, size: 20),
+          child: Icon(icon, color: iconColor, size: 22),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
-        IconButton(
-          onPressed: onAdd,
-          icon: const Icon(Icons.add_circle, color: Colors.blue),
-          tooltip: '添加',
+        Material(
+          color: Colors.blue.withAlpha((0.1 * 255).toInt()),
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onAdd,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: Colors.blue, size: 18),
+                  const SizedBox(width: 4),
+                  Text(
+                    '添加',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -277,7 +310,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   Widget _buildEmptyCard(String text, VoidCallback onTap) {
     return Card(
       elevation: 0,
-      color: Colors.grey[100],
+      color: Colors.grey[50],
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey[300]!),
@@ -287,12 +320,34 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 32),
+          padding: const EdgeInsets.symmetric(vertical: 36),
           child: Column(
             children: [
-              Icon(Icons.add, size: 32, color: Colors.grey[400]),
-              const SizedBox(height: 8),
-              Text(text, style: TextStyle(color: Colors.grey[600])),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withAlpha((0.1 * 255).toInt()),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.add, size: 28, color: Colors.blue[400]),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                text, 
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '点击添加', 
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
         ),
@@ -310,7 +365,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.4,
+        childAspectRatio: 1.3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -413,15 +468,34 @@ class _JenkinsCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               Text(
                 jenkins.remark,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              // 显示用户名
+              Row(
+                children: [
+                  Icon(Icons.person_outline, size: 12, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      jenkins.user,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -517,25 +591,34 @@ class _CodeUpCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               Text(
                 codeup.remark,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Text(
-                '组织ID: ${codeup.orgId}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[600],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              const SizedBox(height: 6),
+              // 显示组织ID
+              Row(
+                children: [
+                  Icon(Icons.business_outlined, size: 12, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '组织: ${codeup.orgId}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

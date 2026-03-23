@@ -72,13 +72,31 @@ class _CodeUpProjectState extends State<CodeUpProject> {
                   leading: Icon(Icons.terminal),
                   title: Row(
                     children: [
-                      Text(_items[index]['path'] + '/', style: TextStyle(color: Colors.grey)),
-                      Text(_items[index]['name'], style: TextStyle(fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: RichText(
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            style: DefaultTextStyle.of(context).style,
+                            children: [
+                              TextSpan(
+                                text: _items[index]['path'] + '/',
+                                style: TextStyle(color: Colors.grey, fontSize: 14),
+                              ),
+                              TextSpan(
+                                text: _items[index]['name'],
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   subtitle: Text(
                     (_items[index]['desc'] == null ? '' : _items[index]['desc'] + ' · ') + "更新于 ${_items[index]['update']}",
                     style: TextStyle(color: Colors.grey[600]),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) {

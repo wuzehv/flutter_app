@@ -292,12 +292,39 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                                 items[index]['state'],
                                 style: TextStyle(backgroundColor: Colors.red, color: Colors.white),
                               ),
-                            Row(
-                              children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, bottom: 6),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                // Diff 按钮
+                                _buildActionButton(
+                                  icon: Icons.compare_arrows,
+                                  label: 'Diff',
+                                  color: Colors.blue,
+                                  onPressed: () {
+                                    final sourcePatchSetId = items[index]['sourcePatchSetBizId']?.toString();
+                                    final targetPatchSetId = items[index]['targetPatchSetBizId']?.toString();
+                                    context.push(
+                                      '/codeup/project/mr_diff',
+                                      extra: {
+                                        'codeup': widget.codeup,
+                                        'projectId': widget.codeup.curProjectId,
+                                        'mrId': items[index]['id'],
+                                        'mrTitle': items[index]['title'],
+                                        'sourcePatchSetBizId': sourcePatchSetId,
+                                        'targetPatchSetBizId': targetPatchSetId,
+                                      },
+                                    );
+                                  },
+                                ),
+                                // 关闭按钮
                                 if (!['CLOSED', 'MERGED'].contains(items[index]['state']))
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                    label: Icon(Icons.close, color: Colors.white),
+                                  _buildActionButton(
+                                    icon: Icons.close,
+                                    label: '关闭',
+                                    color: Colors.red,
                                     onPressed: () async {
                                       await showDialog(
                                         context: context,
@@ -320,11 +347,12 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                                       );
                                     },
                                   ),
-                                SizedBox(width: 15),
+                                // 合并按钮
                                 if (items[index]['state'] == 'TO_BE_MERGED')
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                                    label: Icon(Icons.check, color: Colors.white),
+                                  _buildActionButton(
+                                    icon: Icons.check,
+                                    label: '合并',
+                                    color: Colors.green,
                                     onPressed: () async {
                                       await showDialog(
                                         context: context,
@@ -339,7 +367,6 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                                                   final result = await widget.codeup.okMr(context, widget.codeup.curProjectId, items[index]['id']);
                                                   context.pop();
                                                   if (result != null && result['success'] == true) {
-                                                    // 合并成功，显示二次确认弹窗
                                                     final targetBranch = result['targetBranch'] as String?;
                                                     _showPublishConfirmDialog(targetBranch);
                                                   }
@@ -354,6 +381,7 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                                   ),
                               ],
                             ),
+                          ),
                           ],
                         ),
                       );
@@ -365,6 +393,41 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                   ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  /// 构建操作按钮
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: color.withAlpha((0.1 * 255).toInt()),
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

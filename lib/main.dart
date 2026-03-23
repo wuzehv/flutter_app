@@ -11,6 +11,8 @@ import 'package:jenkins_app/screens/codeup/codeup.dart';
 import 'package:jenkins_app/screens/codeup/codeup_branches.dart';
 import 'package:jenkins_app/screens/codeup/codeup_config.dart';
 import 'package:jenkins_app/screens/codeup/codeup_mr.dart';
+import 'package:jenkins_app/screens/codeup/codeup_mr_diff.dart';
+import 'package:jenkins_app/screens/codeup/codeup_mr_file_diff.dart';
 import 'package:jenkins_app/screens/codeup/codeup_project.dart';
 import 'package:jenkins_app/screens/dashboard.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_config.dart';
@@ -108,6 +110,38 @@ final GoRouter _router = GoRouter(
                     GoRoute(
                       path: 'mr',
                       builder: (BuildContext context, GoRouterState state) => CodeUpMr(codeup: state.extra as CodeUpModel),
+                    ),
+                    GoRoute(
+                      path: 'mr_diff',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return CodeUpMrDiff(
+                          codeup: extra['codeup'] as CodeUpModel,
+                          projectId: extra['projectId'] as int,
+                          mrId: extra['mrId'] as int,
+                          mrTitle: extra['mrTitle'] as String,
+                          sourcePatchSetBizId: extra['sourcePatchSetBizId'] as String?,
+                          targetPatchSetBizId: extra['targetPatchSetBizId'] as String?,
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'mr_file_diff',
+                      builder: (BuildContext context, GoRouterState state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return CodeUpMrFileDiff(
+                          codeup: extra['codeup'] as CodeUpModel,
+                          projectId: extra['projectId'] as int,
+                          mrId: extra['mrId'] as int,
+                          mrTitle: extra['mrTitle'] as String,
+                          filePath: extra['filePath'] as String,
+                          fromCommitId: extra['fromCommitId'] as String?,
+                          toCommitId: extra['toCommitId'] as String?,
+                          isNew: extra['isNew'] as bool? ?? false,
+                          isDeleted: extra['isDeleted'] as bool? ?? false,
+                          isBinary: extra['isBinary'] as bool? ?? false,
+                        );
+                      },
                     ),
                     GoRoute(
                       path: 'branches',
