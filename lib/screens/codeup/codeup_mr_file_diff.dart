@@ -361,21 +361,26 @@ class _CodeUpMrFileDiffState extends State<CodeUpMrFileDiff> {
   Widget _buildDiffLine(DiffLine line) {
     Color backgroundColor;
     Color textColor = Colors.black87;
+    Color indicatorColor;
     
     switch (line.type) {
       case DiffLineType.add:
-        backgroundColor = Colors.green.shade50;
+        backgroundColor = const Color(0xFFE8F5E9); // 更明显的浅绿色
+        indicatorColor = Colors.green;
         break;
       case DiffLineType.delete:
-        backgroundColor = Colors.red.shade50;
+        backgroundColor = const Color(0xFFFFEBEE); // 更明显的浅红色
+        indicatorColor = Colors.red;
         break;
       case DiffLineType.header:
-        backgroundColor = Colors.blue.shade50;
+        backgroundColor = const Color(0xFFE3F2FD); // 更明显的浅蓝色
+        indicatorColor = Colors.blue;
         textColor = Colors.blue.shade800;
         break;
       case DiffLineType.context:
       default:
-        backgroundColor = Colors.white;
+        backgroundColor = const Color(0xFFFFFFFF); // 明确纯白色
+        indicatorColor = Colors.grey.shade300; // 灰色指示条
     }
 
     return Container(
@@ -383,6 +388,12 @@ class _CodeUpMrFileDiffState extends State<CodeUpMrFileDiff> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 左边彩色指示条
+          Container(
+            width: 3,
+            height: 24,
+            color: indicatorColor,
+          ),
           // 旧版本行号
           Container(
             width: 50,
