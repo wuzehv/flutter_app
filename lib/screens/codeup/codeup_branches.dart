@@ -113,7 +113,6 @@ class _CodeUpBranchesState extends State<CodeUpBranches> {
       _navigateToPublishPage(
         result['jenkins'] as JenkinsModel,
         result['projectName'] as String,
-        result['publishType'] as String,
         branchName,
       );
     }
@@ -123,12 +122,11 @@ class _CodeUpBranchesState extends State<CodeUpBranches> {
   void _navigateToPublishPage(
     JenkinsModel jenkins,
     String projectName,
-    String publishType,
     String branchName,
   ) {
-    final path = publishType == 'wms' ? '/job/build_wms' : '/job/build_shipla';
+    // 根据项目名自动判断发布类型
     context.push(
-      path,
+      '/job/build_$projectName',
       extra: {
         'obj': jenkins,
         'name': projectName,
@@ -294,7 +292,6 @@ class _PublishConfigDialog extends StatefulWidget {
 class _PublishConfigDialogState extends State<_PublishConfigDialog> {
   JenkinsModel? selectedJenkins;
   String? selectedProjectName;
-  String? selectedPublishType;
 
   @override
   Widget build(BuildContext context) {
@@ -305,33 +302,6 @@ class _PublishConfigDialogState extends State<_PublishConfigDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 发布类型选择
-            Text('发布类型:', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                ChoiceChip(
-                  label: Text('WMS'),
-                  selected: selectedPublishType == 'wms',
-                  onSelected: (selected) {
-                    setState(() {
-                      selectedPublishType = selected ? 'wms' : null;
-                    });
-                  },
-                ),
-                SizedBox(width: 8),
-                ChoiceChip(
-                  label: Text('Shipla'),
-                  selected: selectedPublishType == 'shipla',
-                  onSelected: (selected) {
-                    setState(() {
-                      selectedPublishType = selected ? 'shipla' : null;
-                    });
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
             // Jenkins 配置选择
             Text('Jenkins 配置:', style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
@@ -384,10 +354,6 @@ class _PublishConfigDialogState extends State<_PublishConfigDialog> {
         ),
         TextButton(
           onPressed: () {
-            if (selectedPublishType == null) {
-              showError('请选择发布类型');
-              return;
-            }
             if (selectedJenkins == null) {
               showError('请选择 Jenkins 配置');
               return;
@@ -399,7 +365,6 @@ class _PublishConfigDialogState extends State<_PublishConfigDialog> {
             Navigator.of(context).pop({
               'jenkins': selectedJenkins,
               'projectName': selectedProjectName,
-              'publishType': selectedPublishType,
             });
           },
           child: Text('确定', style: TextStyle(color: Colors.green)),

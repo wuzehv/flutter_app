@@ -88,17 +88,16 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
     );
 
     if (shouldPublish == true && context.mounted) {
-      // 选择发布类型和 Jenkins 配置
-      _showPublishTypeSelector(jenkinsList, targetBranch);
+      // 选择 Jenkins 配置和项目
+      _showPublishConfigSelector(jenkinsList, targetBranch);
     }
   }
 
-  /// 显示发布类型选择弹窗
-  void _showPublishTypeSelector(List<dynamic> jenkinsList, String? targetBranch) async {
+  /// 显示发布配置选择弹窗
+  void _showPublishConfigSelector(List<dynamic> jenkinsList, String? targetBranch) async {
     // 默认选择第一个 Jenkins 配置
     JenkinsModel? selectedJenkins;
     String? selectedProjectName;
-    String? selectedPublishType; // 'wms' 或 'shipla'
 
     await showDialog(
       context: context,
@@ -112,33 +111,6 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 发布类型选择
-                  Text('发布类型:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ChoiceChip(
-                        label: Text('WMS'),
-                        selected: selectedPublishType == 'wms',
-                        onSelected: (selected) {
-                          setDialogState(() {
-                            selectedPublishType = selected ? 'wms' : null;
-                          });
-                        },
-                      ),
-                      SizedBox(width: 8),
-                      ChoiceChip(
-                        label: Text('Shipla'),
-                        selected: selectedPublishType == 'shipla',
-                        onSelected: (selected) {
-                          setDialogState(() {
-                            selectedPublishType = selected ? 'shipla' : null;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
                   // Jenkins 配置选择
                   Text('Jenkins 配置:', style: TextStyle(fontWeight: FontWeight.bold)),
                   SizedBox(height: 8),
@@ -199,10 +171,6 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
                 ),
                 TextButton(
                   onPressed: () {
-                    if (selectedPublishType == null) {
-                      showError('请选择发布类型');
-                      return;
-                    }
                     if (selectedJenkins == null) {
                       showError('请选择 Jenkins 配置');
                       return;
@@ -223,8 +191,8 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
     );
 
     // 跳转到发布页面
-    if (selectedJenkins != null && selectedProjectName != null && selectedPublishType != null && context.mounted) {
-      _navigateToPublishPage(selectedJenkins!, selectedProjectName!, selectedPublishType!, targetBranch);
+    if (selectedJenkins != null && selectedProjectName != null && context.mounted) {
+      _navigateToPublishPage(selectedJenkins!, selectedProjectName!, targetBranch);
     }
   }
 
@@ -232,12 +200,11 @@ class _CodeUpMrState extends State<CodeUpMr> with SingleTickerProviderStateMixin
   void _navigateToPublishPage(
     JenkinsModel jenkins,
     String projectName,
-    String publishType,
     String? targetBranch,
   ) {
-    final path = publishType == 'wms' ? '/job/build_wms' : '/job/build_shipla';
+    // 根据项目名自动判断发布类型
     context.push(
-      path,
+      '/job/build_$projectName',
       extra: {
         'obj': jenkins,
         'name': projectName,
