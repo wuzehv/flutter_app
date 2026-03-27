@@ -47,7 +47,7 @@ class CodeUpModel {
     if (_dio != null) {
       return _dio!;
     }
-    final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 3)));
+    final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 7)));
 
     dio.options.headers['x-yunxiao-token'] = token;
     dio.options.headers['Content-Type'] = Headers.jsonContentType;

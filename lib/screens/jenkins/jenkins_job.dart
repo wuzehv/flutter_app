@@ -114,15 +114,8 @@ class _JenkinsJobState extends State<JenkinsJob> with TickerProviderStateMixin {
                             title: Text('开始发布', style: TextStyle(color: Colors.green)),
                             leading: Icon(Icons.play_arrow, color: Colors.green),
                             onTap: () async {
-                              // 根据项目名称判断跳转到不同的发布页面
-                              String routePath;
-                              if (job.name.toLowerCase().contains('shipla')) {
-                                routePath = '/job/build_shipla';
-                              } else {
-                                routePath = '/job/build_wms';
-                              }
-                              
-                              context.push(routePath, extra: {
+                              // 使用规范路由格式 /job/build_xxx
+                              context.push('/job/build_${job.name}', extra: {
                                 'obj': provider.currentJenkins,
                                 'name': job.name,
                               });

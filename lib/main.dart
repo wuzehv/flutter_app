@@ -18,8 +18,9 @@ import 'package:jenkins_app/screens/dashboard.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_config.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_job.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_log.dart';
-import 'package:jenkins_app/screens/jenkins/shipla_publish_page.dart'; // 新增导入
-import 'package:jenkins_app/screens/jenkins/wms_publish_page.dart'; // 新增导入
+import 'package:jenkins_app/screens/jenkins/shipla_publish_page.dart';
+import 'package:jenkins_app/screens/jenkins/wms_publish_page.dart';
+import 'package:jenkins_app/screens/jenkins/neo_publish_page.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 
@@ -74,27 +75,36 @@ final GoRouter _router = GoRouter(
                     return JenkinsLog(jenkins: extra['obj'] as JenkinsModel, name: extra['name'], searchOptions: extra['jobs'],);
                   },
                 ),
+                // 通用发布页面路由，根据项目名动态选择页面
                 GoRoute(
-                  path: 'build_wms',
+                  path: 'build_:projectName',
                   builder: (BuildContext context, GoRouterState state) {
+                    final projectName = state.pathParameters['projectName']!;
                     final extra = state.extra as Map<String, dynamic>;
-                    return WmsPublishPage(
-                      projectName: extra['name'], 
-                      jenkins: extra['obj'] as JenkinsModel,
-                      initialBranch: extra['targetBranch'] as String?,
-                    );
-                  },
-                ),
-                // 添加Shipla发布页面路由
-                GoRoute(
-                  path: 'build_shipla',
-                  builder: (BuildContext context, GoRouterState state) {
-                    final extra = state.extra as Map<String, dynamic>;
-                    return ShiplaPublishPage(
-                      projectName: extra['name'], 
-                      jenkins: extra['obj'] as JenkinsModel,
-                      initialBranch: extra['targetBranch'] as String?,
-                    );
+                    final jenkins = extra['obj'] as JenkinsModel;
+                    final initialBranch = extra['targetBranch'] as String?;
+                    
+                    // 根据项目名决定使用哪个发布页面
+                    if (projectName.toLowerCase().contains('shipla')) {
+                      return ShiplaPublishPage(
+                        projectName: projectName,
+                        jenkins: jenkins,
+                        initialBranch: initialBranch,
+                      );
+                    } else if (projectName.toLowerCase().contains('neo')) {
+                      return NeoPublishPage(
+                        projectName: projectName,
+                        jenkins: jenkins,
+                        initialBranch: initialBranch,
+                      );
+                    } else {
+                      // 默认使用 WMS 发布页面
+                      return WmsPublishPage(
+                        projectName: projectName,
+                        jenkins: jenkins,
+                        initialBranch: initialBranch,
+                      );
+                    }
                   },
                 ),
               ],
