@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/loading.dart';
 import 'package:jenkins_app/common/theme.dart';
-import 'package:jenkins_app/common/biometric_provider.dart';
-import 'package:jenkins_app/common/biometric_overlay.dart';
+// import 'package:jenkins_app/common/biometric_provider.dart';
+// import 'package:jenkins_app/common/biometric_overlay.dart';
 import 'package:jenkins_app/models/codeup.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/codeup/codeup.dart';
@@ -30,12 +30,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OKToast(
-      child: BiometricOverlay(
-        key: const ValueKey('biometric_overlay'),
-        child: MaterialApp.router(
-          routerConfig: _router,
-          theme: appTheme,
-        ),
+      child: MaterialApp.router(
+        routerConfig: _router,
+        theme: appTheme,
       ),
     );
   }
@@ -179,9 +176,9 @@ final GoRouter _router = GoRouter(
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 初始化生物识别提供者
+  /* // 初始化生物识别提供者
   final biometricProvider = BiometricProvider();
-  biometricProvider.init();
+  biometricProvider.init(); */
   
   runApp(
     MultiProvider(
@@ -191,7 +188,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => JenkinsProjectProvider()),
         ChangeNotifierProvider(create: (context) => LoadingProvider()),
         ChangeNotifierProvider(create: (context) => CodeUpProvider()),
-        ChangeNotifierProvider.value(value: biometricProvider),
+        // ChangeNotifierProvider.value(value: biometricProvider),
       ],
       child: MyApp(),
     ),

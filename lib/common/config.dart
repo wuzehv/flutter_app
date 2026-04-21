@@ -3,6 +3,7 @@ class Config {
 
   static const String UPGRADE_PORT = ':10000';
   static const String API_PORT = ':10001';
+  static const String CODEUP_PORT = ':10002';
 
   // 是否启用指纹验证（默认 true）
   static const bool ENABLE_BIOMETRIC = true;
@@ -16,4 +17,6 @@ class Config {
   static String get JENKINS_URL => BASE + API_PORT;
 
   static String get UPGRADE_URL => BASE + UPGRADE_PORT;
+
+  static String get CODEUP_URL => BASE + CODEUP_PORT + '/oapi/v1/codeup/organizations';
 }

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:jenkins_app/common/home_bottom.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:jenkins_app/common/config.dart';
-import 'package:jenkins_app/common/biometric_provider.dart';
+// import 'package:jenkins_app/common/biometric_provider.dart';
 import 'package:jenkins_app/models/jenkins.dart';
 import 'package:jenkins_app/screens/jenkins/jenkins_item.dart';
 import 'package:jenkins_app/screens/left_drawer.dart';
@@ -37,12 +35,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _upgrade = Config.UPGRADE_URL;
     _loadList();
-    if (Platform.isAndroid) {
-      _initUpdateListener();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkVersion();
-      });
-    }
+    // web 编译注释掉 Android 更新相关代码
+    // if (Platform.isAndroid) {
+    //   _initUpdateListener();
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _checkVersion();
+    //   });
+    // }
   }
 
   Future<void> _loadList() async {
@@ -115,9 +114,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           ),
         );
 
-        if (result == null) {
-          exit(0);
-        }
+        // web 编译注释掉 exit
+        // if (result == null) {
+        //   exit(0);
+        // }
       }
     } catch (e) {
       showInfo('检查升级失败，请检查网络');
@@ -216,7 +216,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     
     print('🏠 Home 生命周期状态: $state');
     
-    final biometricProvider = context.read<BiometricProvider>();
+    /* final biometricProvider = context.read<BiometricProvider>();
     
     switch (state) {
       case AppLifecycleState.paused:
@@ -238,23 +238,23 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       case AppLifecycleState.hidden:
         // 应用不可见（通常是 Android 的画中画模式等）
         break;
-    }
+    } */
   }
 
   /// 退出应用时设置需要验证
   Future<void> _exitApp() async {
-    final biometricProvider = context.read<BiometricProvider>();
+    // final biometricProvider = context.read<BiometricProvider>();
     // 重置认证状态，下次启动时需要验证
-    biometricProvider.reset();
+    // biometricProvider.reset();
     
     // 延迟一小段时间确保状态保存
     await Future.delayed(Duration(milliseconds: 100));
     
-    // 退出应用
-    if (Platform.isAndroid) {
-      SystemNavigator.pop();
-    } else if (Platform.isIOS) {
-      exit(0);
-    }
+    // 退出应用（web 编译注释掉 Platform 相关代码）
+    // if (Platform.isAndroid) {
+    //   SystemNavigator.pop();
+    // } else if (Platform.isIOS) {
+    //   exit(0);
+    // }
   }
 }

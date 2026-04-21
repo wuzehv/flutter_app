@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,12 +34,13 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _upgrade = Config.UPGRADE_URL;
     _loadData();
-    if (Platform.isAndroid) {
-      _initUpdateListener();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkVersion();
-      });
-    }
+    // web 编译注释掉 Android 更新相关代码
+    // if (Platform.isAndroid) {
+    //   _initUpdateListener();
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _checkVersion();
+    //   });
+    // }
   }
 
   Future<void> _loadData() async {
@@ -106,9 +105,10 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
             ],
           ),
         );
-        if (result == null) {
-          exit(0);
-        }
+        // web 编译注释掉 exit
+        // if (result == null) {
+        //   exit(0);
+        // }
       }
     } catch (e) {
       showInfo('检查升级失败，请检查网络');

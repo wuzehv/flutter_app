@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:jenkins_app/common/config.dart';
 import 'package:jenkins_app/common/shared.dart';
 import 'package:jenkins_app/common/util.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,7 @@ const mrStatusMerged = 'merged';
 const mrStatusClosed = 'closed';
 
 class CodeUpModel {
-  final String url = 'https://openapi-rdc.aliyuncs.com/oapi/v1/codeup/organizations';
+  final String url = Config.CODEUP_URL;
   final String orgId;
   final String token;
   final String remark;
