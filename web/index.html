@@ -18,8 +18,34 @@
 
   <title>jenkins_app</title>
   <link rel="manifest" href="manifest.json">
-</head>
-<body>
+  <script>
+    (function() {
+      var proxy = new Proxy({}, {
+        set: function(target, prop, value) {
+          if (prop === 'loader' && value && value.load) {
+            var orig = value.load.bind(value);
+            value.load = function(opts) {
+              opts = opts || {};
+              opts.config = opts.config || {};
+              if (!opts.config.canvasKitBaseUrl) {
+                opts.config.canvasKitBaseUrl = 'canvaskit/';
+              }
+              return orig(opts);
+            };
+          }
+          target[prop] = value;
+          return true;
+        }
+      });
+      Object.defineProperty(window, '_flutter', {
+        configurable: true,
+        get: function() { return proxy; },
+        set: function(v) {
+          Object.keys(v).forEach(function(k) { proxy[k] = v[k]; });
+        }
+      });
+    })();
+  </script>
   <script>
     {{flutter_bootstrap_js}}
   </script>
