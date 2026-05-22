@@ -5,6 +5,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="A new Flutter project.">
 
   <!-- iOS meta tags & icons -->
@@ -17,7 +18,61 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>jenkins_app</title>
+  <style>
+    /* ── 移动端 & 全局默认：铺满，不限制 ── */
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── PC 端（窗口 > 430px）：模拟移动设备尺寸 ── */
+    @media (min-width: 431px) {
+      html {
+        background: #f0f0f0;
+      }
+      body {
+        overflow: hidden;
+        background: #fff;
+      }
+    }
+  </style>
   <link rel="manifest" href="manifest.json">
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- 劫持 window.innerWidth，让 Flutter 按移动设备宽度布局             -->
+  <!-- 仅在桌面端生效（窗口 > 430px），移动设备保持原始尺寸              -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <script>
+    (function() {
+      var TARGET_WIDTH = 430;
+
+      // 保存原始值（供后续居中计算使用）
+      window.__realInnerWidth  = window.innerWidth;
+      window.__realInnerHeight = window.innerHeight;
+
+      // 只在桌面端劫持
+      if (window.__realInnerWidth <= TARGET_WIDTH) return;
+
+      // 只劫持 innerWidth，垂直方向保持原始值
+      Object.defineProperty(window, 'innerWidth', {
+        get: function() { return TARGET_WIDTH; },
+        configurable: true
+      });
+
+      // 劫持 visualViewport.width
+      if (window.visualViewport) {
+        Object.defineProperty(window.visualViewport, 'width', {
+          get: function() { return TARGET_WIDTH; },
+          configurable: true
+        });
+      }
+
+      window.__mobileViewportHijacked = true;
+    })();
+  </script>
+
   <script>
     (function() {
       var proxy = new Proxy({}, {
@@ -48,6 +103,53 @@
   </script>
   <script>
     {{flutter_bootstrap_js}}
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- PC 端居中：不改 position/transform，只修正 fixed 元素的 left    -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <script>
+    (function() {
+      if (!window.__mobileViewportHijacked) return;
+
+      var TARGET = 430;
+
+      function calcLeft() {
+        // 使用 document.documentElement.clientWidth 获取真实窗口宽度
+        // （innerWidth 已被劫持，但 clientWidth 不受影响）
+        var realW = document.documentElement.clientWidth;
+        return Math.max(0, Math.round((realW - TARGET) / 2));
+      }
+
+      function centerFixedElements() {
+        var leftVal = calcLeft() + 'px';
+        var all = document.body.querySelectorAll('*');
+        for (var i = 0; i < all.length; i++) {
+          var el = all[i];
+          if (el.style.position === 'fixed' || el.style.position === 'absolute') {
+            // 只改 left/right，不动 position / transform
+            el.style.setProperty('left',  leftVal, 'important');
+            el.style.setProperty('right', 'auto',  'important');
+          }
+        }
+      }
+
+      // 首次居中（等 Flutter 渲染出元素后）
+      var tryCount = 0;
+      var tryCenter = function() {
+        centerFixedElements();
+        tryCount++;
+        if (tryCount < 40) {
+          setTimeout(tryCenter, 250);
+        }
+      };
+      setTimeout(tryCenter, 500);
+
+      // 窗口大小变化时重新计算
+      window.addEventListener('resize', function() {
+        centerFixedElements();
+      });
+    })();
   </script>
 </body>
 </html>
